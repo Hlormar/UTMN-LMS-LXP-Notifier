@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_lock"
+        android:icon="@drawable/padlock"
+        android:iconTint="@color/white"
+        android:title="@string/lock">
+    </item>
+    <item
+        android:id="@+id/menu_schedule"
+        android:icon="@drawable/schedule"
+        android:iconTint="@color/white"
+        android:title="@string/schedule">
+    </item>
+    <item
+        android:id="@+id/menu_settings"
+        android:icon="@drawable/setting"
+        android:iconTint="@color/white"
+        android:title="@string/settings">
+    </item>
+</menu>

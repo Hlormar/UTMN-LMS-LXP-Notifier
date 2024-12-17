@@ -1,0 +1,41 @@
+<resources>
+    <string name="app_name">LMS &amp; LXP Notifier</string>
+    <string name="passcode_title">LMS &amp; LXP</string>
+    <string name="welcome">Stay notified with the LMS &amp; LXP notifier</string>
+    <string name="warning">This application is not officially developed by the UTMN</string>
+    <string name="inputRequired">*Required</string>
+    <string name="key1">1</string>
+    <string name="key2">2</string>
+    <string name="key3">3</string>
+    <string name="key4">4</string>
+    <string name="key5">5</string>
+    <string name="key6">6</string>
+    <string name="key7">7</string>
+    <string name="key8">8</string>
+    <string name="key9">9</string>
+    <string name="key0">0</string>
+
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_passcode">Passcode</string>
+
+    <string name="lock">Lock</string>
+    <string name="settings">Settings</string>
+    <string name="schedule">Schedule</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#8A0000</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!--MY-->
+    <color name="view_gray">#CCCCCC</color>
+    <color name="view_gray_dark">#202020</color>
+    <color name="btn_gray">#DDDDDD</color>
+    <color name="btn_gray_dark">#202020</color>
+    <color name="utmn">#00abeb</color>
+    <color name="error">#ff4444</color>
+</resources>
