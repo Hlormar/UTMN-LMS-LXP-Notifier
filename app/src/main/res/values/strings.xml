@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">LMS &amp; LXP Notifier</string>
     <string name="passcode_title">LMS &amp; LXP</string>
-    <string name="welcome">Stay notified with the LMS &amp; LXP notifier</string>
+    <string name="welcome">Stay notified with the \nLMS &amp; LXP notifier</string>
     <string name="warning">This application is not officially developed by the UTMN</string>
     <string name="inputRequired">*Required</string>
     <string name="key1">1</string>
@@ -18,6 +18,9 @@
     <string name="hint_email">Email</string>
     <string name="hint_password">Password</string>
     <string name="hint_passcode">Passcode</string>
+
+    <string name="contentDesc_logo">UTMN logo</string>
+    <string name="contentDesc_backspace">backspace</string>
 
     <string name="lock">Lock</string>
     <string name="settings">Settings</string>

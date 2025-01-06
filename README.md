@@ -4,7 +4,7 @@ Is an android application, developed to notify students of Tyumen university abo
 The application executes the python script using Chaquopy https://github.com/Hlormar/UTMN-LMS-parser to extract the LMS calendar data.
 
 # TODO
-- [ ] Fix the layout scaling (some bottom elements are not showing apropriately on some devices)
+- [x] Fix the layout scaling (some bottom elements are not showing apropriately on some devices)
 - [ ] Hardcode themes
 - [ ] Add objective names
 - [ ] Make switching to schedule tab independent from parsing process + add loading anim

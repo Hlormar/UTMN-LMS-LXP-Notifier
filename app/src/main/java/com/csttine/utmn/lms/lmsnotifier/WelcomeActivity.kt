@@ -2,6 +2,8 @@ package com.csttine.utmn.lms.lmsnotifier
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -20,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.log
 
 
 class WelcomeActivity : AppCompatActivity() {
@@ -27,11 +30,7 @@ class WelcomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.welcome_screen)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+
 
         val emailKey = stringPreferencesKey("email")
         val passwordKey = stringPreferencesKey("password")
@@ -41,6 +40,8 @@ class WelcomeActivity : AppCompatActivity() {
         var passcode = ""
         var passLen = 0
 
+        //vibrator
+        val vibrator = getSystemService("vibrator") as Vibrator
         //define 4 indicators
         val indicator1 = findViewById<View>(R.id.indicator1)
         val indicator2 = findViewById<View>(R.id.indicator2)
@@ -69,7 +70,11 @@ class WelcomeActivity : AppCompatActivity() {
 
         fun disableUserInput(){
             for (i in buttons){
-                i.isEnabled = false}}
+                i.isClickable = false}}
+
+        fun enableUserInput(){
+            for (i in buttons){
+                i.isClickable = true}}
 
         fun fillIndicator(color:Int, border:Int){
             for (i in 0..border) {
@@ -88,15 +93,42 @@ class WelcomeActivity : AppCompatActivity() {
 
                 if (passLen == 4) {
                     disableUserInput()
-                    delay(150)
-                    dataStore.edit { prefs ->
-                        prefs[passcodeKey] = passcode }
-                    dataStore.edit { prefs ->
-                        prefs[emailKey] = email }
-                    dataStore.edit { prefs ->
-                        prefs[passwordKey] = password }
+                    var isAllFilled = true
+                    if (password == ""){
+                        isAllFilled = false
+                        passwordField.error = getString(R.string.inputRequired)
+                    }
+                    if (email == ""){
+                        isAllFilled = false
+                        emailField.error = getString(R.string.inputRequired)
+                    }
 
-                    passcodeProceed()}
+                    if (isAllFilled){
+                        delay(150)
+                        dataStore.edit { prefs ->
+                            prefs[passcodeKey] = passcode }
+                        dataStore.edit { prefs ->
+                            prefs[emailKey] = email }
+                        dataStore.edit { prefs ->
+                            prefs[passwordKey] = password }
+
+                        passcodeProceed()}
+                    else{
+                        passLen = 0
+                        passcode = ""
+                        fillIndicator(R.color.error, 3)
+
+                        if (vibrator.hasVibrator()) {
+                            vibrator.cancel()
+                            val effect = VibrationEffect.createOneShot(100, 1)
+                            vibrator.vibrate(effect)}
+
+                        delay(350)
+                        for (i in 0..3) {
+                            indicators[i].backgroundTintList = indicatorInitialColor}
+                        enableUserInput()
+                    }
+                }
             }
         }
 

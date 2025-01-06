@@ -1,8 +1,5 @@
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
-  <component name="Kotlin2JsCompilerArguments">
-    <option name="moduleKind" value="plain" />
-  </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
       <profile-state>
