@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.csttine.utmn.lms.lmsnotifier"
-    compileSdk = 34
+    compileSdk = 35
 
 
     defaultConfig {

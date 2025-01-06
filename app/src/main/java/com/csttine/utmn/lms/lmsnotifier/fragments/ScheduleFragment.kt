@@ -25,11 +25,19 @@ class ScheduleFragment : Fragment() {
             val mixedList = MainActivity.ParsingChores.parse(requireContext())
             var text = "Время доступа:" + mixedList[0] + "\n\n"
 
-            for (i in 0..(mixedList[1] as List<String>).size - 1) {
-                text += "Название: " + (mixedList[1] as List<String>)[i] + "\n"
-                text += "Тип: " + (mixedList[2] as List<String>)[i] + "\n"
-                text += "Начало: " + (mixedList[3] as List<String>)[i] + "\n"
-                text += "Описание: " + (mixedList[4] as List<String>)[i] + "\n\n"
+            val activities = mixedList[1] as List<String>
+            val activityTypes = mixedList[2] as List<String>
+            val courseNames = mixedList[5] as List<String>
+            val timeStamps = mixedList[3] as List<String>
+            val descriptions = mixedList[4] as List<String>
+            val amount = activities.size - 1
+
+            for (i in 0..amount) {
+                text += "Название: " + activities[i] + "\n"
+                text += "Тип: " + activityTypes[i] + "\n"
+                text += "Курс:" + courseNames[i] + "\n"
+                text += "Начало: " + timeStamps[i] + "\n"
+                text += "Описание: " + descriptions[i] + "\n\n"
             }
             test.text = text
         }

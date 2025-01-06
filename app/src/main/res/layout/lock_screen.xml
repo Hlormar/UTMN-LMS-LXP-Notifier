@@ -1,175 +1,183 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/logo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="128dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/tyumgu_transformed" />
-
-    <TextView
-        android:id="@+id/welcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-black"
-        android:text="@string/passcode_title"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/logo" />
-
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcome">
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="128dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/tyumgu_transformed"
+            android:contentDescription="@string/contentDesc_logo"/>
+
+        <TextView
+            android:id="@+id/welcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="@string/passcode_title"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/logo" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_marginTop="48dp"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/welcome">
 
-            <View
-                android:id="@+id/indicator1"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                style="@style/ViewPasscode">
-            </View>
-            <View
-                android:id="@+id/indicator2"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                style="@style/ViewPasscode">
-            </View>
-            <View
-                android:id="@+id/indicator3"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                style="@style/ViewPasscode">
-            </View>
-            <View
-                android:id="@+id/indicator4"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                style="@style/ViewPasscode">
-            </View>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/button1"
-                style="@style/ButtonPasscode"
-                android:text="@string/key1" />
-
-            <Button
-                android:id="@+id/button2"
-                style="@style/ButtonPasscode"
-                android:layout_marginHorizontal="35dp"
-                android:text="@string/key2" />
-
-            <Button
-                android:id="@+id/button3"
-                style="@style/ButtonPasscode"
-                android:text="@string/key3" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/button4"
-                style="@style/ButtonPasscode"
-                android:text="@string/key4" />
-
-            <Button
-                android:id="@+id/button5"
-                style="@style/ButtonPasscode"
-                android:layout_marginHorizontal="35dp"
-                android:text="@string/key5" />
-
-            <Button
-                android:id="@+id/button6"
-                style="@style/ButtonPasscode"
-                android:text="@string/key6" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/button7"
-                style="@style/ButtonPasscode"
-                android:text="@string/key7" />
-
-            <Button
-                android:id="@+id/button8"
-                style="@style/ButtonPasscode"
-                android:layout_marginHorizontal="35dp"
-                android:text="@string/key8" />
-
-            <Button
-                android:id="@+id/button9"
-                style="@style/ButtonPasscode"
-                android:text="@string/key9" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/buttonFake"
-                style="@style/ButtonPasscode"
-                android:visibility="invisible">
-            </Button>
-
-            <Button
-                android:id="@+id/button0"
-                style="@style/ButtonPasscode"
-                android:layout_marginHorizontal="35dp"
-                android:text="@string/key0" />
-
-            <ImageButton
-                android:id="@+id/buttonBackspace"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scaleX="1.5"
-                android:scaleY="1.5"
-                style="@style/ButtonDeleteInput">
-            </ImageButton>
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/indicator1"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    style="@style/ViewPasscode">
+                </View>
+                <View
+                    android:id="@+id/indicator2"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    style="@style/ViewPasscode">
+                </View>
+                <View
+                    android:id="@+id/indicator3"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    style="@style/ViewPasscode">
+                </View>
+                <View
+                    android:id="@+id/indicator4"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    style="@style/ViewPasscode">
+                </View>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/button1"
+                    style="@style/ButtonPasscode"
+                    android:text="@string/key1" />
+
+                <Button
+                    android:id="@+id/button2"
+                    style="@style/ButtonPasscode"
+                    android:layout_marginHorizontal="35dp"
+                    android:text="@string/key2" />
+
+                <Button
+                    android:id="@+id/button3"
+                    style="@style/ButtonPasscode"
+                    android:text="@string/key3" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/button4"
+                    style="@style/ButtonPasscode"
+                    android:text="@string/key4" />
+
+                <Button
+                    android:id="@+id/button5"
+                    style="@style/ButtonPasscode"
+                    android:layout_marginHorizontal="35dp"
+                    android:text="@string/key5" />
+
+                <Button
+                    android:id="@+id/button6"
+                    style="@style/ButtonPasscode"
+                    android:text="@string/key6" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/button7"
+                    style="@style/ButtonPasscode"
+                    android:text="@string/key7" />
+
+                <Button
+                    android:id="@+id/button8"
+                    style="@style/ButtonPasscode"
+                    android:layout_marginHorizontal="35dp"
+                    android:text="@string/key8" />
+
+                <Button
+                    android:id="@+id/button9"
+                    style="@style/ButtonPasscode"
+                    android:text="@string/key9" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonFake"
+                    style="@style/ButtonPasscode"
+                    android:visibility="invisible">
+                </Button>
+
+                <Button
+                    android:id="@+id/button0"
+                    style="@style/ButtonPasscode"
+                    android:layout_marginHorizontal="35dp"
+                    android:text="@string/key0" />
+
+                <ImageButton
+                    android:id="@+id/buttonBackspace"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scaleX="1.5"
+                    android:scaleY="1.5"
+                    android:contentDescription="@string/contentDesc_backspace"
+                    style="@style/ButtonDeleteInput">
+                </ImageButton>
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

@@ -5,9 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -67,22 +64,25 @@ class MainActivity : AppCompatActivity() {
             var activityTypes: MutableList<String> = mutableListOf()
             var timeStamps: MutableList<String> = mutableListOf()
             var descriptions: MutableList<String> = mutableListOf()
+            var coursesNames: MutableList<String> = mutableListOf()
             var accessTime: String
-            var jsonMap = PyObject.fromJava("-1")
+            var jsonDict = PyObject.fromJava("-1")
             if (token != "-1"){
-                jsonMap = pyModule.callAttr("formatDict", pyModule.callAttr("getCalendar", token))}
+                jsonDict = pyModule.callAttr("formatDict", pyModule.callAttr("getCalendar", token))}
 
             //NEW
-            if (jsonMap.toString() != "-1") {
-                val events = jsonMap.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
-                accessTime = pyModule.callAttr("convertTime",jsonMap.asMap()[PyObject.fromJava("date")]?.asMap()?.get(
+            if (jsonDict.toString() != "-1") {
+                val events = jsonDict.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
+                accessTime = pyModule.callAttr("convertTime",jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(
                     PyObject.fromJava("timestamp"))).toString()
                 //test
                 for (i in events) {
                     activities.add(i.asMap()[PyObject.fromJava("activityname")].toString())
                     activityTypes.add(i.asMap()[PyObject.fromJava("activitystr")].toString())
                     timeStamps.add(i.asMap()[PyObject.fromJava("timestart")].toString())
-                    descriptions.add(i.asMap()[PyObject.fromJava("description")].toString())}
+                    descriptions.add(i.asMap()[PyObject.fromJava("description")].toString())
+                    coursesNames.add(
+                        i.asMap()[PyObject.fromJava("course")]?.asMap()?.get(PyObject.fromJava("fullname")).toString()) }
 
                 for (i in 0..timeStamps.size-1){
                     timeStamps[i] = pyModule.callAttr("convertTime", timeStamps[i]).toString()
@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
                 FragmentDS.writeList(context, "activityTypes", activityTypes)
                 FragmentDS.writeList(context, "timeStamps", timeStamps)
                 FragmentDS.writeList(context, "descriptions", descriptions)
+                FragmentDS.writeList(context, "coursesNames", coursesNames)
             }
             //OLD
             else if (FragmentDS.get(context, "accessTime") != ""){
@@ -100,17 +101,19 @@ class MainActivity : AppCompatActivity() {
                 activityTypes = FragmentDS.getList(context, "activityTypes")
                 timeStamps = FragmentDS.getList(context, "timeStamps")
                 descriptions = FragmentDS.getList(context, "descriptions")
+                coursesNames = FragmentDS.getList(context, "coursesNames")
                 accessTime = FragmentDS.get(context, "accessTime") + "(Старое)"
             }
             //NOTHING
             else{
+                accessTime = "Что-то пошло не так"
                 activities.add("проверьте интернет")
                 activityTypes.add("или корректность логина и пароля")
+                coursesNames.add("322")
                 timeStamps.add("бим бим")
                 descriptions.add("бам бам")
-                accessTime = "Что-то пошло не так"
             }
-            return listOf(accessTime, activities, activityTypes, timeStamps, descriptions)
+            return listOf(accessTime, activities, activityTypes, timeStamps, descriptions, coursesNames)
         }
     }
 
