@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
@@ -31,11 +32,8 @@ class WelcomeActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.welcome_screen)
 
-        val emailKey = stringPreferencesKey("email")
-        val passwordKey = stringPreferencesKey("password")
         var password = ""
         var email = ""
-        val passcodeKey = stringPreferencesKey("passcode")
         var passcode = ""
         var passLen = 0
 
@@ -85,48 +83,47 @@ class WelcomeActivity : AppCompatActivity() {
             finish()}
 
         fun pressPasscodeButton(number:String) {
-            GlobalScope.launch (Dispatchers.Main){
-                passcode += number
-                passLen += 1
-                fillIndicator(R.color.utmn, passLen-1)
+            passcode += number
+            passLen += 1
+            fillIndicator(R.color.utmn, passLen-1)
 
-                if (passLen == 4) {
-                    disableUserInput()
-                    var isAllFilled = true
-                    if (password == ""){
-                        isAllFilled = false
-                        passwordField.error = getString(R.string.inputRequired)
-                    }
-                    if (email == ""){
-                        isAllFilled = false
-                        emailField.error = getString(R.string.inputRequired)
-                    }
+            if (passLen == 4) {
+                disableUserInput()
+                var isAllFilled = true
+                if (password == ""){
+                    isAllFilled = false
+                    passwordField.error = getString(R.string.inputRequired)
+                }
+                if (email == ""){
+                    isAllFilled = false
+                    emailField.error = getString(R.string.inputRequired)
+                }
 
-                    if (isAllFilled){
+                if (isAllFilled){
+                    GlobalScope.launch (Dispatchers.Main){
                         delay(150)
-                        dataStore.edit { prefs ->
-                            prefs[passcodeKey] = passcode }
-                        dataStore.edit { prefs ->
-                            prefs[emailKey] = email }
-                        dataStore.edit { prefs ->
-                            prefs[passwordKey] = password }
-
-                        passcodeProceed()}
-                    else{
-                        passLen = 0
-                        passcode = ""
-                        fillIndicator(R.color.error, 3)
-
-                        if (vibrator.hasVibrator()) {
-                            vibrator.cancel()
-                            val effect = VibrationEffect.createOneShot(100, 1)
-                            vibrator.vibrate(effect)}
-
-                        delay(350)
-                        for (i in 0..3) {
-                            indicators[i].backgroundTintList = indicatorInitialColor}
-                        enableUserInput()
                     }
+                    SharedDS.writeStr(this, "passcode", passcode)
+                    SharedDS.writeStr(this, "email", email)
+                    SharedDS.writeStr(this, "password", password)
+
+                    passcodeProceed()}
+                else{
+                    passLen = 0
+                    passcode = ""
+                    fillIndicator(R.color.error, 3)
+
+                    if (vibrator.hasVibrator()) {
+                        vibrator.cancel()
+                        val effect = VibrationEffect.createOneShot(100, 1)
+                        vibrator.vibrate(effect)}
+
+                    GlobalScope.launch (Dispatchers.Main){
+                        delay(350)
+                    }
+                    for (i in 0..3) {
+                        indicators[i].backgroundTintList = indicatorInitialColor}
+                    enableUserInput()
                 }
             }
         }

@@ -8,6 +8,7 @@ import android.media.RingtoneManager
 import androidx.core.app.NotificationCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 
 class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
     //val dS = appContext.dataStore
@@ -56,9 +57,9 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
     }
 
     override fun doWork(): Result {
-        if (MainActivity.FragmentDS.get(applicationContext, "passcode") != ""){
-            val current = (MainActivity.ParsingChores.parse(applicationContext)[1] as List<String>).toSet()
-            val existing = (MainActivity.FragmentDS.getList(applicationContext, "activities")).toSet()
+        if (SharedDS.get(applicationContext, "passcode") != ""){
+            val current = (ParsingChores.parse(applicationContext)[1] as List<String>).toSet()
+            val existing = (SharedDS.getList(applicationContext, "activities")).toSet()
 
             if (!existing.containsAll(current)){
                 //notify

@@ -11,12 +11,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 
 class LockScreen : AppCompatActivity() {
@@ -25,8 +24,7 @@ class LockScreen : AppCompatActivity() {
         var passcode = ""
         var passLen = 0
         val passcodeKey = stringPreferencesKey("passcode")
-        val exactPassword = runBlocking {
-            dataStore.data.first()[passcodeKey] ?: ""}
+        val exactPass = SharedDS.get(this, "passcode")
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -73,32 +71,34 @@ class LockScreen : AppCompatActivity() {
             finish()}
 
         fun pressPasscodeButton(number:String) {
-            GlobalScope.launch (Dispatchers.Main){
-                passcode += number
-                passLen += 1
-                fillIndicator(R.color.utmn, passLen-1)
+            passcode += number
+            passLen += 1
+            fillIndicator(R.color.utmn, passLen-1)
 
-                if (passLen == 4) {
-                    disableUserInput()
+            if (passLen == 4) {
+                disableUserInput()
+                GlobalScope.launch (Dispatchers.Main) {
                     delay(150)
-                    if (passcode == exactPassword) {
-                        enableUserInput()
-                        passcodeProceed()}
-                    else {
-                        passLen = 0
-                        passcode = ""
-                        fillIndicator(R.color.error, 3)
+                }
+                if (passcode == exactPass) {
+                    enableUserInput()
+                    passcodeProceed()}
+                else {
+                    passLen = 0
+                    passcode = ""
+                    fillIndicator(R.color.error, 3)
 
-                        if (vibrator.hasVibrator()) {
-                            vibrator.cancel()
-                            val effect = VibrationEffect.createOneShot(100, 1)
-                            vibrator.vibrate(effect)}
+                    if (vibrator.hasVibrator()) {
+                        vibrator.cancel()
+                        val effect = VibrationEffect.createOneShot(100, 1)
+                        vibrator.vibrate(effect)}
 
+                    GlobalScope.launch (Dispatchers.Main) {
                         delay(350)
-                        for (i in 0..3) {
-                            indicators[i].backgroundTintList = indicatorInitialColor}
-                        enableUserInput()
                     }
+                    for (i in 0..3) {
+                        indicators[i].backgroundTintList = indicatorInitialColor}
+                    enableUserInput()
                 }
             }
         }

@@ -7,14 +7,10 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.csttine.utmn.lms.lmsnotifier.MainActivity
+import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.R
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class SettingsFragment : Fragment() {
 
@@ -23,8 +19,6 @@ class SettingsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        GlobalScope.launch (Dispatchers.Main){
-            delay(1)}
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
         val emailEdit = view.findViewById<TextInputEditText>(R.id.emailEdit)
@@ -36,9 +30,9 @@ class SettingsFragment : Fragment() {
 
 
         //get values
-        emailEdit.setText(MainActivity.FragmentDS.get(requireContext(), "email"))
-        passwordEdit.setText(MainActivity.FragmentDS.get(requireContext(), "password"))
-        passcodeEdit.setText(MainActivity.FragmentDS.get(requireContext(), "passcode"))
+        emailEdit.setText(SharedDS.get(requireContext(), "email"))
+        passwordEdit.setText(SharedDS.get(requireContext(), "password"))
+        passcodeEdit.setText(SharedDS.get(requireContext(), "passcode"))
 
 
         //recieve values
@@ -98,15 +92,15 @@ class SettingsFragment : Fragment() {
         val tempPasscode = requireView().findViewById<TextInputEditText>(R.id.passcodeEdit).text.toString()
 
         if (tempEmail.isNotEmpty()){
-            MainActivity.FragmentDS.writeStr(requireContext(),"email", tempEmail)
-            MainActivity.FragmentDS.writeStr(requireContext(),"token", "")
+            SharedDS.writeStr(requireContext(),"email", tempEmail)
+            SharedDS.writeStr(requireContext(),"token", "")
         }
         if (tempPassword.isNotEmpty()){
-            MainActivity.FragmentDS.writeStr(requireContext(),"password", tempPassword)
-            MainActivity.FragmentDS.writeStr(requireContext(),"token", "")
+            SharedDS.writeStr(requireContext(),"password", tempPassword)
+            SharedDS.writeStr(requireContext(),"token", "")
         }
         if (tempPasscode.length == 4 && tempPasscode.matches(Regex("\\d+"))){
-            MainActivity.FragmentDS.writeStr(requireContext(),"passcode", tempPasscode)
+            SharedDS.writeStr(requireContext(),"passcode", tempPasscode)
         }
     }
 }
