@@ -14,5 +14,6 @@
     <color name="btn_gray">#DDDDDD</color>
     <color name="btn_gray_dark">#202020</color>
     <color name="utmn">#00abeb</color>
+    <color name="highlight">#7700abeb</color>
     <color name="error">#ff4444</color>
 </resources>

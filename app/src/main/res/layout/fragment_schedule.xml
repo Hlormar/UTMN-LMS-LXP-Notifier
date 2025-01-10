@@ -16,8 +16,14 @@
             android:id="@+id/test"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:contentDescription="schedule text"
             android:padding="16dp"
             android:scrollbars="vertical"
+            android:autoLink="all"
+            android:linksClickable="true"
+            android:textColorLink="@color/utmn"
+            android:textIsSelectable="true"
+            android:textColorHighlight="@color/highlight"
             android:textSize="16sp">
         </TextView>
     </ScrollView>

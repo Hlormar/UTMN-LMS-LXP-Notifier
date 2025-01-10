@@ -1,4 +1,4 @@
-package com.csttine.utmn.lms
+package com.csttine.utmn.lms.lmsnotifier
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,9 +8,6 @@ import android.media.RingtoneManager
 import androidx.core.app.NotificationCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.csttine.utmn.lms.lmsnotifier.LockScreen
-import com.csttine.utmn.lms.lmsnotifier.MainActivity
-import com.csttine.utmn.lms.lmsnotifier.R
 
 class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
     //val dS = appContext.dataStore

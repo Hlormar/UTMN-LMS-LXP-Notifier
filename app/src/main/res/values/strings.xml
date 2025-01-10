@@ -2,7 +2,7 @@
     <string name="app_name">LMS &amp; LXP Notifier</string>
     <string name="passcode_title">LMS &amp; LXP</string>
     <string name="welcome">Stay notified with the \nLMS &amp; LXP notifier</string>
-    <string name="warning">This application is not officially developed by the UTMN</string>
+    <string name="warning">This application is not officially developed by the UTMN\nVisit https://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>
     <string name="inputRequired">*Required</string>
     <string name="key1">1</string>
     <string name="key2">2</string>

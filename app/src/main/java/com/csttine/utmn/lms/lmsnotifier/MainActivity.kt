@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity() {
             var timeStamps: MutableList<String> = mutableListOf()
             var descriptions: MutableList<String> = mutableListOf()
             var coursesNames: MutableList<String> = mutableListOf()
+            var urls: MutableList<String> = mutableListOf()
             var accessTime: String
             var jsonDict = PyObject.fromJava("-1")
             if (token != "-1"){
@@ -81,8 +82,8 @@ class MainActivity : AppCompatActivity() {
                     activityTypes.add(i.asMap()[PyObject.fromJava("activitystr")].toString())
                     timeStamps.add(i.asMap()[PyObject.fromJava("timestart")].toString())
                     descriptions.add(i.asMap()[PyObject.fromJava("description")].toString())
-                    coursesNames.add(
-                        i.asMap()[PyObject.fromJava("course")]?.asMap()?.get(PyObject.fromJava("fullname")).toString()) }
+                    urls.add(i.asMap()[PyObject.fromJava("viewurl")].toString())
+                    coursesNames.add(i.asMap()[PyObject.fromJava("course")]?.asMap()?.get(PyObject.fromJava("fullname")).toString()) }
 
                 for (i in 0..timeStamps.size-1){
                     timeStamps[i] = pyModule.callAttr("convertTime", timeStamps[i]).toString()
@@ -94,6 +95,7 @@ class MainActivity : AppCompatActivity() {
                 FragmentDS.writeList(context, "timeStamps", timeStamps)
                 FragmentDS.writeList(context, "descriptions", descriptions)
                 FragmentDS.writeList(context, "coursesNames", coursesNames)
+                FragmentDS.writeList(context, "URLs", urls)
             }
             //OLD
             else if (FragmentDS.get(context, "accessTime") != ""){
@@ -102,6 +104,7 @@ class MainActivity : AppCompatActivity() {
                 timeStamps = FragmentDS.getList(context, "timeStamps")
                 descriptions = FragmentDS.getList(context, "descriptions")
                 coursesNames = FragmentDS.getList(context, "coursesNames")
+                urls = FragmentDS.getList(context, "URLs")
                 accessTime = FragmentDS.get(context, "accessTime") + "(Старое)"
             }
             //NOTHING
@@ -111,9 +114,10 @@ class MainActivity : AppCompatActivity() {
                 activityTypes.add("или корректность логина и пароля")
                 coursesNames.add("322")
                 timeStamps.add("бим бим")
+                urls.add("https://github.com/Hlormar/UTMN-LMS-LXP-Notifier")
                 descriptions.add("бам бам")
             }
-            return listOf(accessTime, activities, activityTypes, timeStamps, descriptions, coursesNames)
+            return listOf(accessTime, activities, activityTypes, timeStamps, descriptions, coursesNames, urls)
         }
     }
 

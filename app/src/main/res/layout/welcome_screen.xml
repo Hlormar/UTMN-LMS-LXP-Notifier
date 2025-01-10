@@ -252,6 +252,9 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/layoutNums4"
+            android:linksClickable="true"
+            android:textColorLink="@color/utmn"
+            android:autoLink="web"
             android:layout_marginTop="20dp"
             android:text="@string/warning">
         </TextView>

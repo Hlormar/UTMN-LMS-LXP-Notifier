@@ -1,46 +1,55 @@
 package com.csttine.utmn.lms.lmsnotifier.fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import com.csttine.utmn.lms.lmsnotifier.MainActivity
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.csttine.utmn.lms.lmsnotifier.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.csttine.utmn.lms.lmsnotifier.viewmodel.SharedViewModel
+
+lateinit var viewModel : SharedViewModel
+
 
 class ScheduleFragment : Fragment() {
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_schedule, container, false)
-        val test = view.findViewById<TextView>(R.id.test)
-        GlobalScope.launch(Dispatchers.Main) {
-            delay(1)
-            val mixedList = MainActivity.ParsingChores.parse(requireContext())
-            var text = "Время доступа:" + mixedList[0] + "\n\n"
+        return view }
 
-            val activities = mixedList[1] as List<String>
-            val activityTypes = mixedList[2] as List<String>
-            val courseNames = mixedList[5] as List<String>
-            val timeStamps = mixedList[3] as List<String>
-            val descriptions = mixedList[4] as List<String>
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel = ViewModelProvider(this)[SharedViewModel::class.java]
+
+        viewModel.data.observe(viewLifecycleOwner, Observer { data ->
+            val test = view.findViewById<TextView>(R.id.test)
+
+            var text = "Время доступа:" + data[0] + "\n\n"
+            val activities = data[1] as List<String>
+            val activityTypes = data[2] as List<String>
+            val courseNames = data[5] as List<String>
+            val timeStamps = data[3] as List<String>
+            val descriptions = data[4] as List<String>
+            val urls = data[6] as List<String>
             val amount = activities.size - 1
 
             for (i in 0..amount) {
                 text += "Название: " + activities[i] + "\n"
                 text += "Тип: " + activityTypes[i] + "\n"
-                text += "Курс:" + courseNames[i] + "\n"
-                text += "Начало: " + timeStamps[i] + "\n"
-                text += "Описание: " + descriptions[i] + "\n\n"
+                text += "Курс: " + courseNames[i] + "\n"
+                text += "Время: " + timeStamps[i] + "\n"
+                text += "Календарь: " + urls[i] + "\n"
+                text += "Описание: " + Html.fromHtml(descriptions[i], Html.FROM_HTML_MODE_COMPACT) + "\n\n"
             }
             test.text = text
-        }
-        return view
+        })
+
+        viewModel.asyncParse(requireContext())
     }
 }

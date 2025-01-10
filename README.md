@@ -7,10 +7,12 @@ The application executes the python script using Chaquopy https://github.com/Hlo
 - [x] Fix the layout scaling (some bottom elements are not showing apropriately on some devices)
 - [ ] Hardcode themes
 - [x] Add courses names
-- [ ] Make switching to schedule tab independent from parsing process + add loading anim
-- [ ] Render description as html
+- [x] Make switching to schedule tab independent from parsing process
+- [x] Render description as html
+- [ ] Add loading animation
 - [ ] Make each note as a clickable card view
 - [ ] Add credentials to settings
+- [ ] Modify time format
 - [x] Provide android 9.0 support
 - [x] Add notification for new tasks appearing in calendar
 - [ ] Add notification about upcoming deadline (timestart)
