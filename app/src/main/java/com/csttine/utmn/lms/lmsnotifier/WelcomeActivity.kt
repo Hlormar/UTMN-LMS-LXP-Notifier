@@ -100,14 +100,15 @@ class WelcomeActivity : AppCompatActivity() {
                 }
 
                 if (isAllFilled){
+                    SharedDS().writeStr(this, "passcode", passcode)
+                    SharedDS().writeStr(this, "email", email)
+                    SharedDS().writeStr(this, "password", password)
                     GlobalScope.launch (Dispatchers.Main){
                         delay(150)
+                        passcodeProceed()
                     }
-                    SharedDS.writeStr(this, "passcode", passcode)
-                    SharedDS.writeStr(this, "email", email)
-                    SharedDS.writeStr(this, "password", password)
+                }
 
-                    passcodeProceed()}
                 else{
                     passLen = 0
                     passcode = ""
@@ -120,10 +121,10 @@ class WelcomeActivity : AppCompatActivity() {
 
                     GlobalScope.launch (Dispatchers.Main){
                         delay(350)
+                        for (i in 0..3) {
+                            indicators[i].backgroundTintList = indicatorInitialColor}
+                        enableUserInput()
                     }
-                    for (i in 0..3) {
-                        indicators[i].backgroundTintList = indicatorInitialColor}
-                    enableUserInput()
                 }
             }
         }

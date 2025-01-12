@@ -20,10 +20,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
-object ScheduleViewModel : ViewModel(){
+class ScheduleViewModel : ViewModel(){
     private val dataTemp = MutableLiveData<String>()
     val data : LiveData<String> = dataTemp
-    private var isParsed = false
+    companion object {
+        var isParsed = false
+    }
     private var text = ""
 
     fun asyncParse(context: Context){
@@ -56,11 +58,6 @@ object ScheduleViewModel : ViewModel(){
             }
             dataTemp.postValue(text)
         }
-    }
-    // used to force to refresh
-    fun reset(){
-        isParsed = false
-        //Log.d("ScheduleViewModel.isParsed","refreshed")
     }
 }
 

@@ -57,9 +57,9 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
     }
 
     override fun doWork(): Result {
-        if (SharedDS.get(applicationContext, "passcode") != ""){
+        if (SharedDS().get(applicationContext, "passcode") != ""){
             val current = (ParsingChores.parse(applicationContext)[1] as List<String>).toSet()
-            val existing = (SharedDS.getList(applicationContext, "activities")).toSet()
+            val existing = (SharedDS().getList(applicationContext, "activities")).toSet()
 
             if (!existing.containsAll(current)){
                 //notify

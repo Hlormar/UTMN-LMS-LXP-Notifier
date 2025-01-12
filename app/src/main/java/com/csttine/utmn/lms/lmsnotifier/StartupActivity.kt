@@ -12,7 +12,7 @@ class StartupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        if (SharedDS.get(this, "passcode") == ""){
+        if (SharedDS().get(this, "passcode") == ""){
             //setContentView(R.layout.welcome_screen)
             startActivity(Intent(this, WelcomeActivity::class.java))
         }

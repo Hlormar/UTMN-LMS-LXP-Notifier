@@ -10,8 +10,10 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
-object SharedDS{
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
+class SharedDS{
+
     fun get(context: Context, key: String) :String{
         return runBlocking { context.dataStore.data.first()[stringPreferencesKey(key)] ?: "" }
     }

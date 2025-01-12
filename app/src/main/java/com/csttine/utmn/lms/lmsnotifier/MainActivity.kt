@@ -24,12 +24,12 @@ object ParsingChores{
         val py = getInstance()
         val pyModule = py.getModule("main2")
         //token chores
-        var token = SharedDS.get(context, "token")
+        var token = SharedDS().get(context, "token")
         if (token == "" || token == "-1"){
-            val email = SharedDS.get(context, "email")
-            val password = SharedDS.get(context, "password")
+            val email = SharedDS().get(context, "email")
+            val password = SharedDS().get(context, "password")
             token = pyModule.callAttr("getToken", email, password).toString()
-            SharedDS.writeStr(context, "token", token)
+            SharedDS().writeStr(context, "token", token)
         }
 
         var activities: MutableList<String> = mutableListOf()
@@ -61,23 +61,23 @@ object ParsingChores{
                 timeStamps[i] = pyModule.callAttr("convertTime", timeStamps[i]).toString()
             }
 
-            SharedDS.writeStr(context, "accessTime", accessTime)
-            SharedDS.writeList(context, "activities", activities)
-            SharedDS.writeList(context, "activityTypes", activityTypes)
-            SharedDS.writeList(context, "timeStamps", timeStamps)
-            SharedDS.writeList(context, "descriptions", descriptions)
-            SharedDS.writeList(context, "coursesNames", coursesNames)
-            SharedDS.writeList(context, "URLs", urls)
+            SharedDS().writeStr(context, "accessTime", accessTime)
+            SharedDS().writeList(context, "activities", activities)
+            SharedDS().writeList(context, "activityTypes", activityTypes)
+            SharedDS().writeList(context, "timeStamps", timeStamps)
+            SharedDS().writeList(context, "descriptions", descriptions)
+            SharedDS().writeList(context, "coursesNames", coursesNames)
+            SharedDS().writeList(context, "URLs", urls)
         }
         //OLD
-        else if (SharedDS.get(context, "accessTime") != ""){
-            activities = SharedDS.getList(context, "activities")
-            activityTypes = SharedDS.getList(context, "activityTypes")
-            timeStamps = SharedDS.getList(context, "timeStamps")
-            descriptions = SharedDS.getList(context, "descriptions")
-            coursesNames = SharedDS.getList(context, "coursesNames")
-            urls = SharedDS.getList(context, "URLs")
-            accessTime = SharedDS.get(context, "accessTime") + "(Старое)"
+        else if (SharedDS().get(context, "accessTime") != ""){
+            activities = SharedDS().getList(context, "activities")
+            activityTypes = SharedDS().getList(context, "activityTypes")
+            timeStamps = SharedDS().getList(context, "timeStamps")
+            descriptions = SharedDS().getList(context, "descriptions")
+            coursesNames = SharedDS().getList(context, "coursesNames")
+            urls = SharedDS().getList(context, "URLs")
+            accessTime = SharedDS().get(context, "accessTime") + "(Старое)"
         }
         //NOTHING
         else{
@@ -134,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                     makeCurrentFragment(ScheduleFragment())
                     selectedFragment = 0}
                 R.id.menu_settings -> {
-                    ScheduleViewModel.reset()  //force to refresh schedule after returning to it
+                    ScheduleViewModel.isParsed = false  //force to refresh schedule after returning to it
                     makeCurrentFragment(SettingsFragment())
                     selectedFragment = 1}
             }

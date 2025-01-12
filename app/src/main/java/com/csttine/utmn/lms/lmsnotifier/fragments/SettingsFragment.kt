@@ -30,9 +30,9 @@ class SettingsFragment : Fragment() {
 
 
         //get values
-        emailEdit.setText(SharedDS.get(requireContext(), "email"))
-        passwordEdit.setText(SharedDS.get(requireContext(), "password"))
-        passcodeEdit.setText(SharedDS.get(requireContext(), "passcode"))
+        emailEdit.setText(SharedDS().get(requireContext(), "email"))
+        passwordEdit.setText(SharedDS().get(requireContext(), "password"))
+        passcodeEdit.setText(SharedDS().get(requireContext(), "passcode"))
 
 
         //recieve values
@@ -92,15 +92,15 @@ class SettingsFragment : Fragment() {
         val tempPasscode = requireView().findViewById<TextInputEditText>(R.id.passcodeEdit).text.toString()
 
         if (tempEmail.isNotEmpty()){
-            SharedDS.writeStr(requireContext(),"email", tempEmail)
-            SharedDS.writeStr(requireContext(),"token", "")
+            SharedDS().writeStr(requireContext(),"email", tempEmail)
+            SharedDS().writeStr(requireContext(),"token", "")
         }
         if (tempPassword.isNotEmpty()){
-            SharedDS.writeStr(requireContext(),"password", tempPassword)
-            SharedDS.writeStr(requireContext(),"token", "")
+            SharedDS().writeStr(requireContext(),"password", tempPassword)
+            SharedDS().writeStr(requireContext(),"token", "")
         }
         if (tempPasscode.length == 4 && tempPasscode.matches(Regex("\\d+"))){
-            SharedDS.writeStr(requireContext(),"passcode", tempPasscode)
+            SharedDS().writeStr(requireContext(),"passcode", tempPasscode)
         }
     }
 }

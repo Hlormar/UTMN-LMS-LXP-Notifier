@@ -11,24 +11,34 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+class LockScreenViewModel : ViewModel(){
+    var passcode = ""
+    var passLen = 0
+}
 
 class LockScreen : AppCompatActivity() {
+
+    private lateinit var viewModel : LockScreenViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        var passcode = ""
-        var passLen = 0
-        val passcodeKey = stringPreferencesKey("passcode")
-        val exactPass = SharedDS.get(this, "passcode")
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.lock_screen)
+
+        viewModel = ViewModelProvider(this)[LockScreenViewModel::class.java]
+        var passcode = viewModel.passcode
+        var passLen = viewModel.passLen
+        val exactPass = SharedDS().get(this, "passcode")
 
         //vibrator
         val vibrator = getSystemService("vibrator") as Vibrator
@@ -73,19 +83,26 @@ class LockScreen : AppCompatActivity() {
         fun pressPasscodeButton(number:String) {
             passcode += number
             passLen += 1
+            //kinda cache
+            viewModel.passcode = passcode
+            viewModel.passLen = passLen
             fillIndicator(R.color.utmn, passLen-1)
 
             if (passLen == 4) {
                 disableUserInput()
-                GlobalScope.launch (Dispatchers.Main) {
-                    delay(150)
-                }
                 if (passcode == exactPass) {
-                    enableUserInput()
-                    passcodeProceed()}
+                    GlobalScope.launch (Dispatchers.Main) {
+                        delay(150)
+                        enableUserInput()
+                        passcodeProceed()
+                    }
+                }
                 else {
+                    //reset
                     passLen = 0
                     passcode = ""
+                    viewModel.passLen = 0
+                    viewModel.passcode = ""
                     fillIndicator(R.color.error, 3)
 
                     if (vibrator.hasVibrator()) {
@@ -95,13 +112,16 @@ class LockScreen : AppCompatActivity() {
 
                     GlobalScope.launch (Dispatchers.Main) {
                         delay(350)
+                        for (i in 0..3) {
+                            indicators[i].backgroundTintList = indicatorInitialColor}
+                        enableUserInput()
                     }
-                    for (i in 0..3) {
-                        indicators[i].backgroundTintList = indicatorInitialColor}
-                    enableUserInput()
                 }
             }
         }
+
+        //restore indicators after screen rotation or theme change
+        fillIndicator(R.color.utmn, passLen-1)
 
         butt0.setOnClickListener{
             pressPasscodeButton("0") }
@@ -130,5 +150,6 @@ class LockScreen : AppCompatActivity() {
                 indicators[passLen].backgroundTintList = indicatorInitialColor
             }
         }
+
     }
 }
