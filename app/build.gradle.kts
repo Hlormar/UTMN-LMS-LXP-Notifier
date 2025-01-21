@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.chaquo.python")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.24"  //same as kotlin version
 }
 
 android {
@@ -80,6 +81,7 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.com.google.android.material.material)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

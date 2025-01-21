@@ -13,8 +13,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.csttine.utmn.lms.lmsnotifier.ParsingChores
 import com.csttine.utmn.lms.lmsnotifier.R
+import com.csttine.utmn.lms.lmsnotifier.parser.parse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,7 +33,7 @@ class ScheduleViewModel : ViewModel(){
             if (!isParsed){
                 isParsed = true
                 withContext(Dispatchers.IO) {
-                    val mixedList = ParsingChores.parse(context)
+                    val mixedList = parse(context)
                     text = "Время доступа:" + mixedList[0] + "\n\n"
                     val activities = mixedList[1] as List<String>
                     val activityTypes = mixedList[2] as List<String>
