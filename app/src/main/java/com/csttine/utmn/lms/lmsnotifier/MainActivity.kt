@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import com.csttine.utmn.lms.lmsnotifier.fragments.ScheduleFragment
 import com.csttine.utmn.lms.lmsnotifier.fragments.ScheduleViewModel
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragment
+import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragmentViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
@@ -44,12 +45,14 @@ class MainActivity : AppCompatActivity() {
             when (it.itemId){
                 R.id.menu_lock -> {
                     ScheduleViewModel.isParsed = false
+                    SettingsFragmentViewModel.isFirstCreation.value = true
                     val intent = Intent(this, LockScreen::class.java)
                     startActivity(intent) // Start the new activity
                     finish()
                 }
                 R.id.menu_schedule -> {
                     makeCurrentFragment(ScheduleFragment())
+                    SettingsFragmentViewModel.isFirstCreation.value = true
                     selectedFragment = 0}
                 R.id.menu_settings -> {
                     ScheduleViewModel.isParsed = false
