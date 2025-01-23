@@ -9,7 +9,7 @@ The application executes the python script using Chaquopy https://github.com/Hlo
 - [x] Add courses names
 - [x] Make switching to schedule tab independent from parsing process
 - [x] Render description as html
-- [ ] Make every activity survive config changes (rotation, theme changing)
+- [x] Make every activity survive config changes (rotation, theme changing)
 - [ ] Add loading animation
 - [ ] Make each note as a clickable card view
 - [ ] Add credentials to settings
