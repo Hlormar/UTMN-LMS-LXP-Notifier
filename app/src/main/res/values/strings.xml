@@ -4,6 +4,7 @@
     <string name="welcome">Stay notified with the \nLMS &amp; LXP notifier</string>
     <string name="warning">This application is not officially developed by the UTMN\nVisit https://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>
     <string name="inputRequired">*Required</string>
+    <string name="unacceptableChars">*Unacceptable characters</string>
     <string name="key1">1</string>
     <string name="key2">2</string>
     <string name="key3">3</string>

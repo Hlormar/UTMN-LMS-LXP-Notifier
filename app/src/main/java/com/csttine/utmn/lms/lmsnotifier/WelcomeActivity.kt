@@ -5,18 +5,17 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.text.Editable
+import android.text.InputType
 import android.text.TextWatcher
-import android.text.method.LinkMovementMethod
-import android.text.util.Linkify
+import android.text.method.HideReturnsTransformationMethod
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
-import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -26,27 +25,36 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
+class WelcomeActivityViewModel : ViewModel() {
+    var email = ""
+    var password = ""
+    var passcode = ""
+    var passcodeLen = 0
+    var isEmailEdited = false
+    var isPasswordEdited = false
+    var isPasswordVisible = false
+}
+
+
 class WelcomeActivity : AppCompatActivity() {
+
+    private lateinit var viewModel : WelcomeActivityViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.welcome_screen)
 
-        var password = ""
-        var email = ""
-        var passcode = ""
-        var passLen = 0
+        viewModel = ViewModelProvider(this)[WelcomeActivityViewModel::class.java]
 
-        //vibrator
         val vibrator = getSystemService("vibrator") as Vibrator
-        //define 4 indicators
         val indicator1 = findViewById<View>(R.id.indicator1)
         val indicator2 = findViewById<View>(R.id.indicator2)
         val indicator3 = findViewById<View>(R.id.indicator3)
         val indicator4 = findViewById<View>(R.id.indicator4)
         val indicators = mutableListOf(indicator1, indicator2, indicator3, indicator4)
         val indicatorInitialColor = indicator1.backgroundTintList
-        //define 11 buttons
+
         val butt0 = findViewById<Button>(R.id.button0)
         val butt1 = findViewById<Button>(R.id.button1)
         val butt2 = findViewById<Button>(R.id.button2)
@@ -59,7 +67,7 @@ class WelcomeActivity : AppCompatActivity() {
         val butt9 = findViewById<Button>(R.id.button9)
         val buttBackspace = findViewById<ImageButton>(R.id.buttonBackspace)
         val buttons = setOf ( butt0, butt1, butt2, butt3, butt4, butt5, butt6, butt7, butt8, butt9, buttBackspace)
-        //define input fields
+
         val emailEdit = findViewById<TextInputEditText>(R.id.emailEdit)
         val passwordEdit = findViewById<TextInputEditText>(R.id.passwordEdit)
         val emailField = findViewById<TextInputLayout>(R.id.emailLayout)
@@ -79,30 +87,30 @@ class WelcomeActivity : AppCompatActivity() {
 
         fun passcodeProceed(){
             val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent) // Start MainActivity
+            startActivity(intent)
             finish()}
 
         fun pressPasscodeButton(number:String) {
-            passcode += number
-            passLen += 1
-            fillIndicator(R.color.utmn, passLen-1)
+            viewModel.passcode += number
+            viewModel.passcodeLen += 1
+            fillIndicator(R.color.utmn, viewModel.passcodeLen-1)
 
-            if (passLen == 4) {
+            if (viewModel.passcodeLen == 4) {
                 disableUserInput()
                 var isAllFilled = true
-                if (password == ""){
+                if (viewModel.password == ""){
                     isAllFilled = false
                     passwordField.error = getString(R.string.inputRequired)
                 }
-                if (email == ""){
+                if (viewModel.email == ""){
                     isAllFilled = false
                     emailField.error = getString(R.string.inputRequired)
                 }
 
                 if (isAllFilled){
-                    SharedDS().writeStr(this, "passcode", passcode)
-                    SharedDS().writeStr(this, "email", email)
-                    SharedDS().writeStr(this, "password", password)
+                    SharedDS().writeStr(this, "passcode", viewModel.passcode)
+                    SharedDS().writeStr(this, "email", viewModel.email)
+                    SharedDS().writeStr(this, "password", viewModel.password)
                     GlobalScope.launch (Dispatchers.Main){
                         delay(150)
                         passcodeProceed()
@@ -110,8 +118,8 @@ class WelcomeActivity : AppCompatActivity() {
                 }
 
                 else{
-                    passLen = 0
-                    passcode = ""
+                    viewModel.passcodeLen = 0
+                    viewModel.passcode = ""
                     fillIndicator(R.color.error, 3)
 
                     if (vibrator.hasVibrator()) {
@@ -128,6 +136,15 @@ class WelcomeActivity : AppCompatActivity() {
                 }
             }
         }
+
+        //Restore view after config changes
+        emailEdit.setText(viewModel.email)
+        passwordEdit.setText(viewModel.password)
+        if (viewModel.isPasswordVisible){
+            // using this because setting inputType directly triggers EndIconOnClick listener some why(
+            passwordEdit.transformationMethod = HideReturnsTransformationMethod.getInstance()
+        }
+        fillIndicator(R.color.utmn, viewModel.passcodeLen-1)
 
         butt0.setOnClickListener{
             pressPasscodeButton("0") }
@@ -150,34 +167,62 @@ class WelcomeActivity : AppCompatActivity() {
         butt9.setOnClickListener{
             pressPasscodeButton("9") }
         buttBackspace.setOnClickListener{
-            if (passLen > 0){
-                passLen -= 1
-                passcode = passcode.dropLast(1)
-                indicators[passLen].backgroundTintList = indicatorInitialColor}
+            if (viewModel.passcodeLen > 0){
+                viewModel.passcodeLen -= 1
+                viewModel.passcode = viewModel.passcode.dropLast(1)
+                indicators[viewModel.passcodeLen].backgroundTintList = indicatorInitialColor}
         }
+
+        //listen
         emailEdit.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s.isNullOrEmpty()){
+                //check if actually has been edited
+                if (!s.isNullOrEmpty() && !viewModel.isEmailEdited){
+                    viewModel.isEmailEdited = true
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.email = s.toString()
+                if (s.isNullOrEmpty() && viewModel.isEmailEdited){
                     emailField.error = getString(R.string.inputRequired)
                 }
                 else{
                     emailField.error = null
                 }
             }
-            override fun afterTextChanged(s: Editable?) {email = s.toString()}
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
         })
+
+
         passwordEdit.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s.isNullOrEmpty()){
+                //check if actually has been edited
+                if (!s.isNullOrEmpty() && !viewModel.isPasswordEdited){
+                    viewModel.isPasswordEdited = true
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.password = s.toString()
+                if (s.isNullOrEmpty() && viewModel.isPasswordEdited){
                     passwordField.error = getString(R.string.inputRequired)
                 }
                 else{
                     passwordField.error = null
                 }
             }
-            override fun afterTextChanged(s: Editable?) {password = s.toString()}
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
         })
+
+
+        //Input type save & change
+        passwordField.setEndIconOnClickListener{
+            viewModel.isPasswordVisible = passwordEdit.inputType == (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)
+            if (viewModel.isPasswordVisible){
+                passwordEdit.inputType = (InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD)
+            } else{
+                passwordEdit.inputType = (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)
+            }
+        }
     }
+
 }

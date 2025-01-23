@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -27,7 +26,14 @@ class SettingsFragmentViewModel : ViewModel(){
     var passcode = ""
     var passwordEditInputType = (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)
     var passcodeEditInputType = (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)
+    var isEmailEdited = false
+    var isPasswordEdited = false
+    var isPasscodeEdited = false
+    var emailFieldError : CharSequence? = null
+    var passwordFieldError : CharSequence? = null
+    var passcodeFieldError : CharSequence? = null
 }
+
 
 class SettingsFragment : Fragment() {
 
@@ -49,71 +55,90 @@ class SettingsFragment : Fragment() {
 
         viewModel = ViewModelProvider(requireActivity())[SettingsFragmentViewModel::class.java]
 
-        //restore field values after rotation or load default
+        //restore field values after rotation or load defaults
         if (isFirstCreation.value == true) {
             isFirstCreation.value = false
-            Log.d("RESTORE FROM DS", viewModel.email)
             emailEdit.setText(SharedDS().get(requireContext(), "email"))
             passwordEdit.setText(SharedDS().get(requireContext(), "password"))
             passcodeEdit.setText(SharedDS().get(requireContext(), "passcode"))
         }
         else{
-            Log.d("RESTORE FROM VIEWMODEL", viewModel.email)
             emailEdit.setText(viewModel.email)
             passwordEdit.setText(viewModel.password)
             passcodeEdit.setText(viewModel.passcode)
             passwordEdit.inputType = viewModel.passwordEditInputType
             passcodeEdit.inputType = viewModel.passcodeEditInputType
+            emailField.error = viewModel.emailFieldError
+            passwordField.error = viewModel.passwordFieldError
+            passcodeField.error = viewModel.passcodeFieldError
         }
-
 
         //listen
         emailEdit.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s.isNullOrEmpty()){
+                //check if actually has been edited
+                if (!s.isNullOrEmpty() && !viewModel.isEmailEdited){
+                    viewModel.isEmailEdited = true
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.email = s.toString()
+                if (s.isNullOrEmpty() && viewModel.isEmailEdited){
                     emailField.error = getString(R.string.inputRequired)
                 }
                 else{
                     emailField.error = null
                 }
+                viewModel.emailFieldError = emailField.error
             }
-            override fun afterTextChanged(s: Editable?) {}
         })
 
         passwordEdit.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s.isNullOrEmpty()){
+                //check if actually has been edited
+                if (!s.isNullOrEmpty() && !viewModel.isPasswordEdited){
+                    viewModel.isPasswordEdited = true
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.password = s.toString()
+                if (s.isNullOrEmpty() && viewModel.isPasswordEdited){
                     passwordField.error = getString(R.string.inputRequired)
                 }
                 else{
                     passwordField.error = null
                 }
+                viewModel.passwordFieldError = passwordField.error
             }
-            override fun afterTextChanged(s: Editable?) {}
         })
 
         passcodeEdit.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (s.isNullOrEmpty()){
+                //check if actually has been edited
+                if (!s.isNullOrEmpty() && !viewModel.isPasscodeEdited){
+                    viewModel.isPasscodeEdited = true
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.passcode = s.toString()
+                if (s.isNullOrEmpty() && viewModel.isPasscodeEdited){
                     passcodeField.error = getString(R.string.inputRequired)
                 }
-                else if (!s.matches(Regex("\\d+"))){
-                    passcodeField.error = "*Unacceptable characters"
+                else if (!s!!.matches(Regex("\\d+"))){
+                    passcodeField.error = getString(R.string.unacceptableChars)
                 }
                 else{
                     passcodeField.error = null
                 }
+                viewModel.passcodeFieldError = passcodeField.error
             }
-            override fun afterTextChanged(s: Editable?) {}
         })
 
-        //Input type save & restore
+
+        //Input type save & change
         passwordField.setEndIconOnClickListener {
             if (viewModel.passwordEditInputType == (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)){
                 viewModel.passwordEditInputType = (InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD)
@@ -139,28 +164,17 @@ class SettingsFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        val tempEmail = requireView().findViewById<TextInputEditText>(R.id.emailEdit).text.toString()
-        val tempPassword = requireView().findViewById<TextInputEditText>(R.id.passwordEdit).text.toString()
-        val tempPasscode = requireView().findViewById<TextInputEditText>(R.id.passcodeEdit).text.toString()
-
-        //save to viewModel to restore after rotation
-        Log.d("SAVE TO VIEWMODEL", tempEmail)
-        Log.d("PASSWORD END ICON", requireView().findViewById<TextInputEditText>(R.id.passwordEdit).inputType.toString())
-        viewModel.email = tempEmail
-        viewModel.password = tempPassword
-        viewModel.passcode = tempPasscode
-
         //save to dataStore if user input is correct
-        if (tempEmail.isNotEmpty()){
-            SharedDS().writeStr(requireContext(),"email", tempEmail)
+        if (viewModel.email.isNotEmpty()){
+            SharedDS().writeStr(requireContext(),"email", viewModel.email)
             SharedDS().writeStr(requireContext(),"token", "")
         }
-        if (tempPassword.isNotEmpty()){
-            SharedDS().writeStr(requireContext(),"password", tempPassword)
+        if (viewModel.password.isNotEmpty()){
+            SharedDS().writeStr(requireContext(),"password", viewModel.password)
             SharedDS().writeStr(requireContext(),"token", "")
         }
-        if (tempPasscode.length == 4 && tempPasscode.matches(Regex("\\d+"))){
-            SharedDS().writeStr(requireContext(),"passcode", tempPasscode)
+        if (viewModel.passcode.length == 4 && viewModel.passcode.matches(Regex("\\d+"))){
+            SharedDS().writeStr(requireContext(),"passcode", viewModel.passcode)
         }
     }
 }
