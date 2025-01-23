@@ -3,6 +3,11 @@ Is an android application, developed to notify students of Tyumen university abo
 
 The application executes the python script using Chaquopy https://github.com/Hlormar/UTMN-LMS-parser to extract the LMS calendar data.
 
+## Cloning
+```bash
+git clone --recurse-submodules https://github.com/Hlormar/UTMN-LMS-LXP-Notifier.git
+```
+
 # TODO
 - [x] Fix the layout scaling (some bottom elements are not showing appropriately on some devices)
 - [ ] Hardcode themes
