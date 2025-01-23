@@ -11,7 +11,7 @@ fun parse(context: Context) :List<Any> {
         Python.start(AndroidPlatform(context))
     }
     val py = Python.getInstance()
-    val pyModule = py.getModule("main2")
+    val pyModule = py.getModule("parser")
     //token chores
     var token = SharedDS().get(context, "token")
     if (token == "" || token == "-1"){
@@ -51,7 +51,7 @@ fun parse(context: Context) :List<Any> {
                 )
             ).toString()) }
 
-        for (i in 0..timeStamps.size-1){
+        for (i in 0..<timeStamps.size){
             timeStamps[i] = pyModule.callAttr("convertTime", timeStamps[i]).toString()
         }
         SharedDS().writeStr(context, "accessTime", accessTime)
