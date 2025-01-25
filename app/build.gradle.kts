@@ -60,7 +60,7 @@ chaquopy {
             install("requests")
         }
         pyc {
-            src = false
+            src = true
         }
     }
     productFlavors {
