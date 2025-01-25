@@ -40,7 +40,8 @@ class ScheduleViewModel : ViewModel(){
                     val activities = mixedList[1] as List<String>
                     val activityTypes = mixedList[2] as List<String>
                     val courseNames = mixedList[5] as List<String>
-                    val timeStamps = mixedList[3] as List<String>
+                    val timeStarts = mixedList[3] as List<String>
+                    val timeDuration = mixedList[7] as List<String>
                     val descriptions = mixedList[4] as List<String>
                     val urls = mixedList[6] as List<String>
                     val amount = activities.size - 1
@@ -49,7 +50,8 @@ class ScheduleViewModel : ViewModel(){
                         text += "Название: " + activities[i] + "\n"
                         text += "Тип: " + activityTypes[i] + "\n"
                         text += "Курс: " + courseNames[i] + "\n"
-                        text += "Время: " + timeStamps[i] + "\n"
+                        text += "Время: " + timeStarts[i] + "\n"
+                        text += "Продолжительность: " + timeDuration[i] + "\n"
                         text += "Календарь: " + urls[i] + "\n"
                         text += "Описание: " + Html.fromHtml(
                             descriptions[i],

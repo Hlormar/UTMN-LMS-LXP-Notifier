@@ -2,20 +2,17 @@ package com.csttine.utmn.lms.lmsnotifier.parser
 
 import android.content.Context
 import android.content.res.Resources
-import android.util.Log
+import android.icu.text.SimpleDateFormat
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 
 private fun formatTimeStamps(timestamp: Long) :String {
     //formats with app locale
     val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Resources.getSystem().configuration.locales[0])
-    Log.d("Locale", timestamp.toString())
     return format.format(Date(timestamp * 1000)) //sec to mill sec
 }
 
@@ -37,7 +34,8 @@ fun parse(context: Context) :List<Any> {
 
     var activities: MutableList<String> = mutableListOf()
     var activityTypes: MutableList<String> = mutableListOf()
-    var timeStamps: MutableList<String> = mutableListOf()
+    var timeStarts: MutableList<String> = mutableListOf()
+    var timeDurations: MutableList<String> = mutableListOf()
     var descriptions: MutableList<String> = mutableListOf()
     var coursesNames: MutableList<String> = mutableListOf()
     var urls: MutableList<String> = mutableListOf()
@@ -49,9 +47,6 @@ fun parse(context: Context) :List<Any> {
     //NEW
     if (jsonDict.toString() != "-1") {
         val events = jsonDict.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
-        /*accessTime = pyModule.callAttr("convertTime",jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(
-            PyObject.fromJava("timestamp")
-        )).toString()*/
         accessTime = formatTimeStamps(
             jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp"))!!
                 .toLong())
@@ -59,7 +54,8 @@ fun parse(context: Context) :List<Any> {
         for (i in events) {
             activities.add(i.asMap()[PyObject.fromJava("activityname")].toString())
             activityTypes.add(i.asMap()[PyObject.fromJava("activitystr")].toString())
-            timeStamps.add(i.asMap()[PyObject.fromJava("timestart")].toString())
+            timeStarts.add(i.asMap()[PyObject.fromJava("timestart")].toString())
+            timeDurations.add(i.asMap()[PyObject.fromJava("timeduration")].toString())
             descriptions.add(i.asMap()[PyObject.fromJava("description")].toString())
             urls.add(i.asMap()[PyObject.fromJava("viewurl")].toString())
             coursesNames.add(i.asMap()[PyObject.fromJava("course")]?.asMap()?.get(
@@ -68,14 +64,18 @@ fun parse(context: Context) :List<Any> {
                 )
             ).toString()) }
 
-        for (i in 0..<timeStamps.size){
-            //timeStamps[i] = pyModule.callAttr("convertTime", timeStamps[i]).toString()
-            timeStamps[i] = formatTimeStamps(timeStamps[i].toLong())
+        //format timestarts and timedurations
+        for (i in 0..<timeStarts.size){
+            timeStarts[i] = formatTimeStamps(timeStarts[i].toLong())
+            //TODO: better formating + not sure it represented as seconds
+            val temp = timeDurations[i].toLong()
+            timeDurations[i] = "${(temp / 3600)}:${((temp % 3600) / 60)}:${(temp % 60)}"
         }
         SharedDS().writeStr(context, "accessTime", accessTime)
         SharedDS().writeList(context, "activities", activities)
         SharedDS().writeList(context, "activityTypes", activityTypes)
-        SharedDS().writeList(context, "timeStamps", timeStamps)
+        SharedDS().writeList(context, "timeStarts", timeStarts)
+        SharedDS().writeList(context, "timeDurations", timeDurations)
         SharedDS().writeList(context, "descriptions", descriptions)
         SharedDS().writeList(context, "coursesNames", coursesNames)
         SharedDS().writeList(context, "URLs", urls)
@@ -85,7 +85,8 @@ fun parse(context: Context) :List<Any> {
     else if (SharedDS().get(context, "accessTime") != ""){
         activities = SharedDS().getList(context, "activities")
         activityTypes = SharedDS().getList(context, "activityTypes")
-        timeStamps = SharedDS().getList(context, "timeStamps")
+        timeStarts = SharedDS().getList(context, "timeStarts")
+        timeDurations = SharedDS().getList(context, "timeDurations")
         descriptions = SharedDS().getList(context, "descriptions")
         coursesNames = SharedDS().getList(context, "coursesNames")
         urls = SharedDS().getList(context, "URLs")
@@ -93,13 +94,15 @@ fun parse(context: Context) :List<Any> {
     }
     //NOTHING
     else{
-        accessTime = "Что-то пошло не так"
+        accessTime = "Здесь пока ничего нет"
         activities.add("проверьте интернет")
         activityTypes.add("или корректность логина и пароля")
-        coursesNames.add("322")
-        timeStamps.add("бим бим")
+        coursesNames.add("либо сам лмс сейчас лежит")
+        timeStarts.add("322")
+        timeDurations.add("бим бим")
         urls.add("https://github.com/Hlormar/UTMN-LMS-LXP-Notifier")
         descriptions.add("бам бам")
     }
-    return listOf(accessTime, activities, activityTypes, timeStamps, descriptions, coursesNames, urls)
+    //TODO: rearrange
+    return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations)
 }
