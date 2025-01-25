@@ -6,7 +6,9 @@ import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -77,8 +79,8 @@ class ScheduleFragment : Fragment() {
 
         viewModel = ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
         viewModel.data.observe(viewLifecycleOwner) { data ->
-            val test = view.findViewById<TextView>(R.id.test)
-            test.text = data
+            view.findViewById<TextView>(R.id.test).text = data
+            view.findViewById<ProgressBar>(R.id.loadingAnim).isVisible = false
         }
 
         viewModel.asyncParse(requireContext())

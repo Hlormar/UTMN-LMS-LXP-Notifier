@@ -11,11 +11,16 @@ import android.view.ViewGroup
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.R
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragmentViewModel.Companion.isFirstCreation
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsFragmentViewModel : ViewModel(){
     companion object {
@@ -73,90 +78,94 @@ class SettingsFragment : Fragment() {
             passcodeField.error = viewModel.passcodeFieldError
         }
 
-        //listen
-        emailEdit.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                //check if actually has been edited
-                if (!s.isNullOrEmpty() && !viewModel.isEmailEdited){
-                    viewModel.isEmailEdited = true
-                }
-            }
-            override fun afterTextChanged(s: Editable?) {
-                viewModel.email = s.toString()
-                if (s.isNullOrEmpty() && viewModel.isEmailEdited){
-                    emailField.error = getString(R.string.inputRequired)
-                }
-                else{
-                    emailField.error = null
-                }
-                viewModel.emailFieldError = emailField.error
-            }
-        })
+        //listeners inside Dispatchers.IO to provide async & instant fragment switching
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main){
+            withContext(Dispatchers.IO){
+                emailEdit.addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        //check if actually has been edited
+                        if (!s.isNullOrEmpty() && !viewModel.isEmailEdited){
+                            viewModel.isEmailEdited = true
+                        }
+                    }
+                    override fun afterTextChanged(s: Editable?) {
+                        viewModel.email = s.toString()
+                        if (s.isNullOrEmpty() && viewModel.isEmailEdited){
+                            emailField.error = getString(R.string.inputRequired)
+                        }
+                        else{
+                            emailField.error = null
+                        }
+                        viewModel.emailFieldError = emailField.error
+                    }
+                })
 
-        passwordEdit.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                //check if actually has been edited
-                if (!s.isNullOrEmpty() && !viewModel.isPasswordEdited){
-                    viewModel.isPasswordEdited = true
-                }
-            }
-            override fun afterTextChanged(s: Editable?) {
-                viewModel.password = s.toString()
-                if (s.isNullOrEmpty() && viewModel.isPasswordEdited){
-                    passwordField.error = getString(R.string.inputRequired)
-                }
-                else{
-                    passwordField.error = null
-                }
-                viewModel.passwordFieldError = passwordField.error
-            }
-        })
+                passwordEdit.addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        //check if actually has been edited
+                        if (!s.isNullOrEmpty() && !viewModel.isPasswordEdited){
+                            viewModel.isPasswordEdited = true
+                        }
+                    }
+                    override fun afterTextChanged(s: Editable?) {
+                        viewModel.password = s.toString()
+                        if (s.isNullOrEmpty() && viewModel.isPasswordEdited){
+                            passwordField.error = getString(R.string.inputRequired)
+                        }
+                        else{
+                            passwordField.error = null
+                        }
+                        viewModel.passwordFieldError = passwordField.error
+                    }
+                })
 
-        passcodeEdit.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                //check if actually has been edited
-                if (!s.isNullOrEmpty() && !viewModel.isPasscodeEdited){
-                    viewModel.isPasscodeEdited = true
-                }
-            }
-            override fun afterTextChanged(s: Editable?) {
-                viewModel.passcode = s.toString()
-                if (s.isNullOrEmpty() && viewModel.isPasscodeEdited){
-                    passcodeField.error = getString(R.string.inputRequired)
-                }
-                else if (!s!!.matches(Regex("\\d+"))){
-                    passcodeField.error = getString(R.string.unacceptableChars)
-                }
-                else{
-                    passcodeField.error = null
-                }
-                viewModel.passcodeFieldError = passcodeField.error
-            }
-        })
+                passcodeEdit.addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        //check if actually has been edited
+                        if (!s.isNullOrEmpty() && !viewModel.isPasscodeEdited){
+                            viewModel.isPasscodeEdited = true
+                        }
+                    }
+                    override fun afterTextChanged(s: Editable?) {
+                        viewModel.passcode = s.toString()
+                        if (s.isNullOrEmpty() && viewModel.isPasscodeEdited){
+                            passcodeField.error = getString(R.string.inputRequired)
+                        }
+                        else if (!s!!.matches(Regex("\\d+"))){
+                            passcodeField.error = getString(R.string.unacceptableChars)
+                        }
+                        else{
+                            passcodeField.error = null
+                        }
+                        viewModel.passcodeFieldError = passcodeField.error
+                    }
+                })
 
 
-        //Input type save & change
-        passwordField.setEndIconOnClickListener {
-            if (viewModel.passwordEditInputType == (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)){
-                viewModel.passwordEditInputType = (InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD)
-            }
-            else{
-                viewModel.passwordEditInputType = (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)
-            }
-            passwordEdit.inputType = viewModel.passwordEditInputType
-        }
+                //Input type save & change
+                passwordField.setEndIconOnClickListener {
+                    if (viewModel.passwordEditInputType == (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)){
+                        viewModel.passwordEditInputType = (InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD)
+                    }
+                    else{
+                        viewModel.passwordEditInputType = (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)
+                    }
+                    passwordEdit.inputType = viewModel.passwordEditInputType
+                }
 
-        passcodeField.setEndIconOnClickListener {
-            if (viewModel.passcodeEditInputType == (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)){
-                viewModel.passcodeEditInputType = (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_NORMAL)
+                passcodeField.setEndIconOnClickListener {
+                    if (viewModel.passcodeEditInputType == (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)){
+                        viewModel.passcodeEditInputType = (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_NORMAL)
+                    }
+                    else{
+                        viewModel.passcodeEditInputType = (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)
+                    }
+                    passcodeEdit.inputType = viewModel.passcodeEditInputType
+                }
             }
-            else{
-                viewModel.passcodeEditInputType = (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)
-            }
-            passcodeEdit.inputType = viewModel.passcodeEditInputType
         }
 
         return view

@@ -42,4 +42,9 @@
         <item name="tint">@android:color/secondary_text_dark</item>
         <item name="android:backgroundTint">@android:color/transparent</item>
     </style>
+
+    <style name="ProgressBarCircle" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:indeterminateTint">@color/utmn</item>
+        <item name="android:indeterminate">true</item>
+    </style>
 </resources>
