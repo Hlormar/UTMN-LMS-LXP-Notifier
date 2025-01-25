@@ -15,10 +15,10 @@ git clone --recurse-submodules https://github.com/Hlormar/UTMN-LMS-LXP-Notifier.
 - [x] Make switching to schedule tab independent from parsing process
 - [x] Render description as html
 - [x] Make every activity survive config changes (rotation, theme changing)
-- [ ] Add loading animation
+- [x] Add loading animation
 - [ ] Make each note as a clickable card view
 - [ ] Add credentials to settings
-- [ ] Modify time format
+- [x] Modify time format
 - [x] Provide android 9.0 support
 - [x] Add notification for new tasks appearing in calendar
 - [ ] Add notification about upcoming deadline (timestart)

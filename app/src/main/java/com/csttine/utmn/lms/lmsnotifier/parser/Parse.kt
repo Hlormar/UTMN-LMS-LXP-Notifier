@@ -1,10 +1,24 @@
 package com.csttine.utmn.lms.lmsnotifier.parser
 
 import android.content.Context
+import android.content.res.Resources
+import android.util.Log
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+
+private fun formatTimeStamps(timestamp: Long) :String {
+    //formats with app locale
+    val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Resources.getSystem().configuration.locales[0])
+    Log.d("Locale", timestamp.toString())
+    return format.format(Date(timestamp * 1000)) //sec to mill sec
+}
+
 
 fun parse(context: Context) :List<Any> {
     if (!Python.isStarted()) {
@@ -35,10 +49,13 @@ fun parse(context: Context) :List<Any> {
     //NEW
     if (jsonDict.toString() != "-1") {
         val events = jsonDict.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
-        accessTime = pyModule.callAttr("convertTime",jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(
+        /*accessTime = pyModule.callAttr("convertTime",jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(
             PyObject.fromJava("timestamp")
-        )).toString()
-        //test
+        )).toString()*/
+        accessTime = formatTimeStamps(
+            jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp"))!!
+                .toLong())
+
         for (i in events) {
             activities.add(i.asMap()[PyObject.fromJava("activityname")].toString())
             activityTypes.add(i.asMap()[PyObject.fromJava("activitystr")].toString())
@@ -52,7 +69,8 @@ fun parse(context: Context) :List<Any> {
             ).toString()) }
 
         for (i in 0..<timeStamps.size){
-            timeStamps[i] = pyModule.callAttr("convertTime", timeStamps[i]).toString()
+            //timeStamps[i] = pyModule.callAttr("convertTime", timeStamps[i]).toString()
+            timeStamps[i] = formatTimeStamps(timeStamps[i].toLong())
         }
         SharedDS().writeStr(context, "accessTime", accessTime)
         SharedDS().writeList(context, "activities", activities)
