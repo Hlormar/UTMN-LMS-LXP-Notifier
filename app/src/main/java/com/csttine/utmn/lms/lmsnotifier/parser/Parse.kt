@@ -1,20 +1,10 @@
 package com.csttine.utmn.lms.lmsnotifier.parser
 
 import android.content.Context
-import android.content.res.Resources
-import android.icu.text.SimpleDateFormat
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
-import java.util.Date
-
-
-private fun formatTimeStamps(timestamp: Long) :String {
-    //formats with app locale
-    val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Resources.getSystem().configuration.locales[0])
-    return format.format(Date(timestamp * 1000)) //sec to mill sec
-}
 
 
 fun parse(context: Context) :List<Any> {
@@ -39,17 +29,17 @@ fun parse(context: Context) :List<Any> {
     var descriptions: MutableList<String> = mutableListOf()
     var coursesNames: MutableList<String> = mutableListOf()
     var urls: MutableList<String> = mutableListOf()
-    var accessTime: String
+    var accessTime = ""
+    var source: Byte = -1  //-1 = error; 0 = new; 1 = old
     var jsonDict = PyObject.fromJava("-1")
     if (token != "-1"){
         jsonDict = pyModule.callAttr("formatDict", pyModule.callAttr("getCalendar", token))}
 
     //NEW
     if (jsonDict.toString() != "-1") {
+        source = 0
         val events = jsonDict.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
-        accessTime = formatTimeStamps(
-            jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp"))!!
-                .toLong())
+        accessTime = jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp")).toString()
 
         for (i in events) {
             activities.add(i.asMap()[PyObject.fromJava("activityname")].toString())
@@ -64,13 +54,7 @@ fun parse(context: Context) :List<Any> {
                 )
             ).toString()) }
 
-        //format timestarts and timedurations
-        for (i in 0..<timeStarts.size){
-            timeStarts[i] = formatTimeStamps(timeStarts[i].toLong())
-            //TODO: better formating + not sure it represented as seconds
-            val temp = timeDurations[i].toLong()
-            timeDurations[i] = "${(temp / 3600)}:${((temp % 3600) / 60)}:${(temp % 60)}"
-        }
+
         SharedDS().writeStr(context, "accessTime", accessTime)
         SharedDS().writeList(context, "activities", activities)
         SharedDS().writeList(context, "activityTypes", activityTypes)
@@ -83,6 +67,7 @@ fun parse(context: Context) :List<Any> {
     }
     //OLD
     else if (SharedDS().get(context, "accessTime") != ""){
+        source = 1
         activities = SharedDS().getList(context, "activities")
         activityTypes = SharedDS().getList(context, "activityTypes")
         timeStarts = SharedDS().getList(context, "timeStarts")
@@ -90,19 +75,9 @@ fun parse(context: Context) :List<Any> {
         descriptions = SharedDS().getList(context, "descriptions")
         coursesNames = SharedDS().getList(context, "coursesNames")
         urls = SharedDS().getList(context, "URLs")
-        accessTime = SharedDS().get(context, "accessTime") + "(Старое)"
+        accessTime = SharedDS().get(context, "accessTime")
     }
-    //NOTHING
-    else{
-        accessTime = "Здесь пока ничего нет"
-        activities.add("проверьте интернет")
-        activityTypes.add("или корректность логина и пароля")
-        coursesNames.add("либо сам лмс сейчас лежит")
-        timeStarts.add("322")
-        timeDurations.add("бим бим")
-        urls.add("https://github.com/Hlormar/UTMN-LMS-LXP-Notifier")
-        descriptions.add("бам бам")
-    }
+
     //TODO: rearrange
-    return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations)
+    return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source)
 }

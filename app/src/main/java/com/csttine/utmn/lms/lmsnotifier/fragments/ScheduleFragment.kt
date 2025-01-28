@@ -1,8 +1,11 @@
 package com.csttine.utmn.lms.lmsnotifier.fragments
 
 import android.content.Context
+import android.content.res.Resources
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.text.Html
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +23,7 @@ import com.csttine.utmn.lms.lmsnotifier.parser.parse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Date
 
 
 class ScheduleViewModel : ViewModel(){
@@ -30,33 +34,55 @@ class ScheduleViewModel : ViewModel(){
     }
     private var text = ""
 
+    private fun formatTimeStamps(timestamp: Long) :String {
+        //formats with app locale
+        val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Resources.getSystem().configuration.locales[0])
+        return format.format(Date(timestamp * 1000)) //sec to mill sec
+    }
+
     fun asyncParse(context: Context){
         viewModelScope.launch {
             if (!isParsed){
                 isParsed = true
                 withContext(Dispatchers.IO) {
                     val mixedList = parse(context)
-                    text = "Время доступа:" + mixedList[0] + "\n\n"
-                    val activities = mixedList[1] as List<String>
-                    val activityTypes = mixedList[2] as List<String>
-                    val courseNames = mixedList[5] as List<String>
-                    val timeStarts = mixedList[3] as List<String>
-                    val timeDuration = mixedList[7] as List<String>
-                    val descriptions = mixedList[4] as List<String>
-                    val urls = mixedList[6] as List<String>
-                    val amount = activities.size - 1
+                    val source = mixedList[8] as Byte
+                    if (source == (-1).toByte()){
+                        text = "Что-то пошло не так\n" +
+                                "Проверьте подключение к сети\n" +
+                                "Или правильность логина и пароля\n" +
+                                "Или возможно сайт LMS сейчас лежит\n" +
+                                "бим бим бам бам 322\n" +
+                                "https://github.com/Hlormar/UTMN-LMS-LXP-Notifier"
+                    } else {
+                        val accessTime = (mixedList[0] as String).toLong()
+                        text = if (source == 0.toByte()){
+                            "Время доступа: " + formatTimeStamps(accessTime) + "\n\n"}
+                        else{
+                            "Время доступа: " + formatTimeStamps(accessTime) + "(Старое) \n\n" }
 
-                    for (i in 0..amount) {
-                        text += "Название: " + activities[i] + "\n"
-                        text += "Тип: " + activityTypes[i] + "\n"
-                        text += "Курс: " + courseNames[i] + "\n"
-                        text += "Время: " + timeStarts[i] + "\n"
-                        text += "Продолжительность: " + timeDuration[i] + "\n"
-                        text += "Календарь: " + urls[i] + "\n"
-                        text += "Описание: " + Html.fromHtml(
-                            descriptions[i],
-                            Html.FROM_HTML_MODE_COMPACT
-                        ) + "\n\n"
+                        val activities = mixedList[1] as List<String>
+                        val activityTypes = mixedList[2] as List<String>
+                        val courseNames = mixedList[5] as List<String>
+                        val timeStarts = mixedList[3] as List<String>
+                        val timeDurations = mixedList[7] as List<String>
+                        val descriptions = mixedList[4] as List<String>
+                        val urls = mixedList[6] as List<String>
+
+                        for (i in activities.indices) {
+                            val temp = timeDurations[i].toLong()
+
+                            text += "Название: " + activities[i] + "\n"
+                            text += "Тип: " + activityTypes[i] + "\n"
+                            text += "Курс: " + courseNames[i] + "\n"
+                            text += "Время: " + formatTimeStamps(timeStarts[i].toLong()) + "\n"
+                            text += "Продолжительность: ${(temp / 3600)}:${((temp % 3600) / 60)}:${(temp % 60)}\n"
+                            text += "Календарь: " + urls[i] + "\n"
+                            text += "Описание: " + Html.fromHtml(
+                                descriptions[i],
+                                Html.FROM_HTML_MODE_COMPACT
+                            ) + "\n\n"
+                        }
                     }
                 }
             }
