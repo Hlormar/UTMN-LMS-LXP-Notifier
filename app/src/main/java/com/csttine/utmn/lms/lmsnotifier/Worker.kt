@@ -9,14 +9,14 @@ import androidx.core.app.NotificationCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import com.csttine.utmn.lms.lmsnotifier.fragments.formatTimeStamps
 import com.csttine.utmn.lms.lmsnotifier.parser.parse
 
 class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
     //val dS = appContext.dataStore
 
-    private fun sendNotification(title: String, message: String) {
+    private fun sendNotification(title: String, message: String, notificationId: Int) {
         val channelId = "lms_not_id"
-        val notificationId = 1
         val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
 
@@ -58,18 +58,26 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
     }
 
     override fun doWork(): Result {
-        if (SharedDS().get(applicationContext, "passcode") != ""){
-            val current = (parse(applicationContext)[1] as List<String>).toSet()
-            val existing = (SharedDS().getList(applicationContext, "activities")).toSet()
+        val isPeriodic = inputData.getBoolean("isPeriodic", true)
 
-            if (!existing.containsAll(current)){
-                //notify
-                sendNotification("You got a new task","Please check the application for more details")
+        if (SharedDS().get(applicationContext, "passcode") != ""){
+            if (isPeriodic){
+                if (parse(applicationContext)[9] as Boolean){
+                    //notify
+                    sendNotification("You got a new task","Please check the application for more details", -1)
+                }
+                else{
+                    //do nothing or test
+                    sendNotification("test","just working", -1)
+                }
             }
-            //else{
-                //do nothin or test
-                //sendNotification("test","nothing")
-            //}
+
+            else {
+                val scheduleActivityIndex = inputData.getInt("scheduleActivityIndex", -1)
+                sendNotification("Upcoming deadline", SharedDS().getList(applicationContext, "activities")[scheduleActivityIndex] +
+                        " at ${formatTimeStamps(SharedDS().getList(applicationContext, "timeStarts")[scheduleActivityIndex])}", scheduleActivityIndex)
+            }
+
         }
         return Result.success()
     }

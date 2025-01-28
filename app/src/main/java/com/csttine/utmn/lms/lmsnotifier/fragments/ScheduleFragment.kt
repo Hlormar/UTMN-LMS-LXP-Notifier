@@ -5,7 +5,6 @@ import android.content.res.Resources
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.text.Html
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,6 +25,13 @@ import kotlinx.coroutines.withContext
 import java.util.Date
 
 
+fun formatTimeStamps(timestamp: String) :String {
+    //formats with app locale
+    val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Resources.getSystem().configuration.locales[0])
+    return format.format(Date(timestamp.toLong() * 1000)) //sec to mill sec
+}
+
+
 class ScheduleViewModel : ViewModel(){
     private val dataTemp = MutableLiveData<String>()
     val data : LiveData<String> = dataTemp
@@ -33,12 +39,6 @@ class ScheduleViewModel : ViewModel(){
         var isParsed = false
     }
     private var text = ""
-
-    private fun formatTimeStamps(timestamp: Long) :String {
-        //formats with app locale
-        val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Resources.getSystem().configuration.locales[0])
-        return format.format(Date(timestamp * 1000)) //sec to mill sec
-    }
 
     fun asyncParse(context: Context){
         viewModelScope.launch {
@@ -55,7 +55,7 @@ class ScheduleViewModel : ViewModel(){
                                 "бим бим бам бам 322\n" +
                                 "https://github.com/Hlormar/UTMN-LMS-LXP-Notifier"
                     } else {
-                        val accessTime = (mixedList[0] as String).toLong()
+                        val accessTime = (mixedList[0] as String)
                         text = if (source == 0.toByte()){
                             "Время доступа: " + formatTimeStamps(accessTime) + "\n\n"}
                         else{
@@ -75,7 +75,7 @@ class ScheduleViewModel : ViewModel(){
                             text += "Название: " + activities[i] + "\n"
                             text += "Тип: " + activityTypes[i] + "\n"
                             text += "Курс: " + courseNames[i] + "\n"
-                            text += "Время: " + formatTimeStamps(timeStarts[i].toLong()) + "\n"
+                            text += "Время: " + formatTimeStamps(timeStarts[i]) + "\n"
                             text += "Продолжительность: ${(temp / 3600)}:${((temp % 3600) / 60)}:${(temp % 60)}\n"
                             text += "Календарь: " + urls[i] + "\n"
                             text += "Описание: " + Html.fromHtml(

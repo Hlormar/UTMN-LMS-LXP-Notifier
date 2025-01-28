@@ -1,10 +1,15 @@
 package com.csttine.utmn.lms.lmsnotifier.parser
 
 import android.content.Context
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.csttine.utmn.lms.lmsnotifier.WorkRuntime
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import java.util.concurrent.TimeUnit
 
 
 fun parse(context: Context) :List<Any> {
@@ -31,6 +36,7 @@ fun parse(context: Context) :List<Any> {
     var urls: MutableList<String> = mutableListOf()
     var accessTime = ""
     var source: Byte = -1  //-1 = error; 0 = new; 1 = old
+    var areThereNewTasks = false
     var jsonDict = PyObject.fromJava("-1")
     if (token != "-1"){
         jsonDict = pyModule.callAttr("formatDict", pyModule.callAttr("getCalendar", token))}
@@ -53,6 +59,32 @@ fun parse(context: Context) :List<Any> {
                     "fullname"
                 )
             ).toString()) }
+
+        //re-enqueue if there are new tasks
+        if (!SharedDS().getList(context, "activities").containsAll(activities)) {
+            areThereNewTasks = true
+            for (i in activities.indices) {
+                var delaySex = timeStarts[i].toLong() - (System.currentTimeMillis() / 1000)
+                if (delaySex > 0) {
+
+                    //try to remind 5 hrs before, else remind now
+                    val calculated = delaySex - 18000
+                    if (calculated >= 0) {
+                        delaySex = calculated
+                    }
+
+                    val workRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
+                        .setInitialDelay(delaySex, TimeUnit.SECONDS)
+                        .setInputData(Data.Builder()
+                            .putBoolean("isPeriodic", false)
+                            .putInt("scheduleActivityIndex", i)
+                            .build())
+                        .build()
+                    WorkManager.getInstance(context).enqueue(workRequest)
+
+                }
+            }
+        }
 
 
         SharedDS().writeStr(context, "accessTime", accessTime)
@@ -79,5 +111,5 @@ fun parse(context: Context) :List<Any> {
     }
 
     //TODO: rearrange
-    return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source)
+    return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
 }
