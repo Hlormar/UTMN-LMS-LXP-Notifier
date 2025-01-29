@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -72,11 +73,12 @@ private class CardViewAdapter(
 
 
 class ScheduleViewModel : ViewModel(){
-    private val dataTemp = MutableLiveData<List<Any>>()
-    val data : LiveData<List<Any>> = dataTemp
     companion object {
         var isParsed = false
+        val dataTemp = MutableLiveData<List<Any>>()
     }
+
+    val data : LiveData<List<Any>> = dataTemp
     private var text = ""
 
     fun asyncParse(context: Context){
@@ -146,29 +148,45 @@ class ScheduleFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(context)
-
         viewModel = ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
         viewModel.data.observe(viewLifecycleOwner) { data ->
-            //view.findViewById<TextView>(R.id.test).text = data
-            view.findViewById<ProgressBar>(R.id.loadingAnim).isVisible = false
-            val titlesList = data[1] as MutableList<String>
-            val coursesList = data[5] as MutableList<String>
+            if (data.isNotEmpty()){
+                val infoText = view.findViewById<TextView>(R.id.infoText)
+                view.findViewById<ProgressBar>(R.id.loadingAnim).isVisible = false
 
-            for (i in 0..20) {
-                titlesList.add("venom")
-                coursesList.add("venom")
-            }
-
-            adapter = CardViewAdapter(titlesList, coursesList, object : CardViewAdapter.OnItemClickListener {
-                override fun onItemClick(position: Int) {
-                    // Handle item click
-                    val clickedItem = titlesList[position]
-                    Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
+                //setting info message
+                if (data[8] as Byte == (-1).toByte()) {
+                    infoText.text = getString(R.string.scheduleErrorMsg)
                 }
-            })
-            recyclerView.adapter = adapter
+                else{
+                    infoText.text = if (data[8] == 0.toByte()){
+                        "Время доступа: " + formatTimeStamps(data[0] as String)}
+                    else{
+                        "Время доступа: " + formatTimeStamps(data[0] as String) + "(Старое)"}
+
+
+                    recyclerView = view.findViewById(R.id.recyclerView)
+                    recyclerView.layoutManager = LinearLayoutManager(context)
+                    recyclerView.isVisible = true
+
+                    val titlesList = data[1] as MutableList<String>
+                    val coursesList = data[5] as MutableList<String>
+
+                    for (i in 0..20) {
+                        titlesList.add("venom")
+                        coursesList.add("venom")
+                    }
+
+                    adapter = CardViewAdapter(titlesList, coursesList, object : CardViewAdapter.OnItemClickListener {
+                        override fun onItemClick(position: Int) {
+                            // Handle item click
+                            val clickedItem = titlesList[position]
+                            Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
+                        }
+                    })
+                    recyclerView.adapter = adapter
+                }
+            }
         }
 
         viewModel.asyncParse(requireContext())

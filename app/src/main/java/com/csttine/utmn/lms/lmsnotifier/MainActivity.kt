@@ -50,10 +50,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.menu_schedule -> {
                     makeCurrentFragment(ScheduleFragment())
+                    //uncomment if want the schedule to reload on reselection
+                    /*ScheduleViewModel.isParsed = false
+                    ScheduleViewModel.dataTemp.postValue(listOf())*/
                     SettingsFragmentViewModel.isFirstCreation.value = true
                     selectedFragment = 0}
                 R.id.menu_settings -> {
                     ScheduleViewModel.isParsed = false
+                    ScheduleViewModel.dataTemp.postValue(listOf()) //resetting data, forcing loadingAnimation to appear
                     makeCurrentFragment(SettingsFragment())
                     selectedFragment = 1}
             }

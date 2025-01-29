@@ -5,6 +5,14 @@
     <string name="warning">This application is not officially developed by the UTMN\nVisit https://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>
     <string name="inputRequired">*Required</string>
     <string name="unacceptableChars">*Unacceptable characters</string>
+    <string name="scheduleErrorMsg">
+        Что-то пошло не так\n
+        Проверьте подключение к сети\n
+        Или правильность логина и пароля\n
+        Или возможно сайт LMS сейчас лежит\n
+        бим бим бам бам 322\n
+        https://github.com/Hlormar/UTMN-LMS-LXP-Notifier
+    </string>
     <string name="key1">1</string>
     <string name="key2">2</string>
     <string name="key3">3</string>
@@ -24,6 +32,7 @@
     <string name="contentDesc_backspace">backspace</string>
     <string name="contentDesc_cardviewTitle">Title</string>
     <string name="contentDesc_cardviewDesc">Description</string>
+    <string name="contentDesc_infoText">Parsing info</string>
 
     <string name="lock">Lock</string>
     <string name="settings">Settings</string>
