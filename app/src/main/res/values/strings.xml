@@ -22,6 +22,8 @@
 
     <string name="contentDesc_logo">UTMN logo</string>
     <string name="contentDesc_backspace">backspace</string>
+    <string name="contentDesc_cardviewTitle">Title</string>
+    <string name="contentDesc_cardviewDesc">Description</string>
 
     <string name="lock">Lock</string>
     <string name="settings">Settings</string>

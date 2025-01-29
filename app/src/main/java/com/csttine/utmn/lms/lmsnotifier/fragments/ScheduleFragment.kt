@@ -4,12 +4,12 @@ import android.content.Context
 import android.content.res.Resources
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
-import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
@@ -17,6 +17,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.csttine.utmn.lms.lmsnotifier.R
 import com.csttine.utmn.lms.lmsnotifier.parser.parse
 import kotlinx.coroutines.Dispatchers
@@ -32,9 +34,46 @@ fun formatTimeStamps(timestamp: String) :String {
 }
 
 
+private class CardViewAdapter(
+    private val titlesList: List<String>,
+    private val coursesList: List<String>,
+    private val listener: OnItemClickListener
+) : RecyclerView.Adapter<CardViewAdapter.ViewHolder>() {
+
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val title: TextView = itemView.findViewById(R.id.cardTitle)
+        val description: TextView = itemView.findViewById(R.id.cardDescription)
+    }
+
+    interface OnItemClickListener {
+        fun onItemClick(position: Int)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val itemView = LayoutInflater.from(parent.context)
+            .inflate(R.layout.card_view, parent, false)
+        return ViewHolder(itemView)
+    }
+
+    // Binding the data to the ViewHolder
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.title.text = titlesList[position]
+        holder.description.text = coursesList[position]
+
+        // Set click listener on the entire card view
+        holder.itemView.setOnClickListener {
+            listener.onItemClick(position)
+        }
+    }
+
+    // Return the size of the list
+    override fun getItemCount() = titlesList.size
+}
+
+
 class ScheduleViewModel : ViewModel(){
-    private val dataTemp = MutableLiveData<String>()
-    val data : LiveData<String> = dataTemp
+    private val dataTemp = MutableLiveData<List<Any>>()
+    val data : LiveData<List<Any>> = dataTemp
     companion object {
         var isParsed = false
     }
@@ -46,7 +85,8 @@ class ScheduleViewModel : ViewModel(){
                 isParsed = true
                 withContext(Dispatchers.IO) {
                     val mixedList = parse(context)
-                    val source = mixedList[8] as Byte
+                    dataTemp.postValue(mixedList)
+                    /*val source = mixedList[8] as Byte
                     if (source == (-1).toByte()){
                         text = "Что-то пошло не так\n" +
                                 "Проверьте подключение к сети\n" +
@@ -83,10 +123,9 @@ class ScheduleViewModel : ViewModel(){
                                 Html.FROM_HTML_MODE_COMPACT
                             ) + "\n\n"
                         }
-                    }
+                    }*/
                 }
             }
-            dataTemp.postValue(text)
         }
     }
 }
@@ -94,6 +133,8 @@ class ScheduleViewModel : ViewModel(){
 class ScheduleFragment : Fragment() {
 
     private lateinit var viewModel : ScheduleViewModel
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var  adapter: CardViewAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -105,10 +146,29 @@ class ScheduleFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        recyclerView = view.findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(context)
+
         viewModel = ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
         viewModel.data.observe(viewLifecycleOwner) { data ->
-            view.findViewById<TextView>(R.id.test).text = data
+            //view.findViewById<TextView>(R.id.test).text = data
             view.findViewById<ProgressBar>(R.id.loadingAnim).isVisible = false
+            val titlesList = data[1] as MutableList<String>
+            val coursesList = data[5] as MutableList<String>
+
+            for (i in 0..20) {
+                titlesList.add("venom")
+                coursesList.add("venom")
+            }
+
+            adapter = CardViewAdapter(titlesList, coursesList, object : CardViewAdapter.OnItemClickListener {
+                override fun onItemClick(position: Int) {
+                    // Handle item click
+                    val clickedItem = titlesList[position]
+                    Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
+                }
+            })
+            recyclerView.adapter = adapter
         }
 
         viewModel.asyncParse(requireContext())
