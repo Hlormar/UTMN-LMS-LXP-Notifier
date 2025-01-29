@@ -63,20 +63,19 @@ class SettingsFragment : Fragment() {
         //restore field values after rotation or load defaults
         if (isFirstCreation.value == true) {
             isFirstCreation.value = false
-            emailEdit.setText(SharedDS().get(requireContext(), "email"))
-            passwordEdit.setText(SharedDS().get(requireContext(), "password"))
-            passcodeEdit.setText(SharedDS().get(requireContext(), "passcode"))
+            viewModel.email = SharedDS().get(requireContext(), "email")
+            viewModel.password = SharedDS().get(requireContext(), "password")
+            viewModel.passcode = SharedDS().get(requireContext(), "passcode")
         }
-        else{
-            emailEdit.setText(viewModel.email)
-            passwordEdit.setText(viewModel.password)
-            passcodeEdit.setText(viewModel.passcode)
-            passwordEdit.inputType = viewModel.passwordEditInputType
-            passcodeEdit.inputType = viewModel.passcodeEditInputType
-            emailField.error = viewModel.emailFieldError
-            passwordField.error = viewModel.passwordFieldError
-            passcodeField.error = viewModel.passcodeFieldError
-        }
+
+        emailEdit.setText(viewModel.email)
+        passwordEdit.setText(viewModel.password)
+        passcodeEdit.setText(viewModel.passcode)
+        passwordEdit.inputType = viewModel.passwordEditInputType
+        passcodeEdit.inputType = viewModel.passcodeEditInputType
+        emailField.error = viewModel.emailFieldError
+        passwordField.error = viewModel.passwordFieldError
+        passcodeField.error = viewModel.passcodeFieldError
 
         //listeners inside Dispatchers.IO to provide async & instant fragment switching
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main){
