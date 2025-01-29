@@ -74,6 +74,27 @@
                 android:layout_height="match_parent">
             </com.google.android.material.textfield.TextInputEditText>
         </com.google.android.material.textfield.TextInputLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="100">
+        </View>
+
+        <TextView
+            android:id="@+id/disclaimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            android:layout_weight="20"
+            android:linksClickable="true"
+            android:textColorLink="@color/utmn"
+            android:autoLink="web"
+            android:layout_marginTop="20dp"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/warning">
+        </TextView>
     </LinearLayout>
 
 

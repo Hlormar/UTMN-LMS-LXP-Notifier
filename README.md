@@ -17,7 +17,7 @@ git clone --recurse-submodules https://github.com/Hlormar/UTMN-LMS-LXP-Notifier.
 - [x] Make every activity survive config changes (rotation, theme changing)
 - [x] Add loading animation
 - [ ] Make each note as a clickable card view
-- [ ] Add credentials to settings
+- [x] Add credits to settings
 - [x] Modify time format
 - [x] Provide android 9.0 support
 - [x] Add notification for new tasks appearing in calendar
