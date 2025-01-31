@@ -21,7 +21,7 @@
             android:layout_gravity="center"
             app:endIconMode="clear_text"
             style="@style/InputLayout"
-            app:startIconDrawable="@android:drawable/sym_action_email"
+            app:startIconDrawable="@drawable/ic_email"
             android:hint="@string/hint_email">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/emailEdit"
@@ -40,7 +40,7 @@
             android:layout_gravity="center"
             app:endIconMode="password_toggle"
             style="@style/InputLayout"
-            app:startIconDrawable="@android:drawable/ic_lock_lock"
+            app:startIconDrawable="@drawable/ic_lock"
             android:layout_marginVertical="10dp"
             android:hint="@string/hint_password">
             <com.google.android.material.textfield.TextInputEditText
@@ -60,7 +60,7 @@
             android:layout_gravity="center"
             app:endIconMode="password_toggle"
             style="@style/InputLayout"
-            app:startIconDrawable="@android:drawable/ic_lock_lock"
+            app:startIconDrawable="@drawable/ic_lock"
             app:counterEnabled="true"
             app:counterMaxLength="4"
             android:layout_marginVertical="10dp"
