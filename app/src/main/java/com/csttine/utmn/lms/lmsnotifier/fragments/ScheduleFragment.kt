@@ -1,13 +1,17 @@
 package com.csttine.utmn.lms.lmsnotifier.fragments
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -197,8 +201,17 @@ class ScheduleFragment : Fragment() {
                     adapter = CardViewAdapter(titlesList, coursesList, object : CardViewAdapter.OnItemClickListener {
                         override fun onItemClick(position: Int) {
                             // Handle item click
-                            val clickedItem = titlesList[position]
-                            Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
+                            //val clickedItem = titlesList[position]
+                            //Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
+                            @SuppressLint("InflateParams")
+                            val popupLayout = layoutInflater.inflate(R.layout.popup_screen, null, false)
+                            val popupWindow = PopupWindow(
+                                popupLayout,
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                true
+                            ).showAtLocation(view, Gravity.CENTER, 0, 0)
+
                         }
                     })
                     recyclerView.adapter = adapter
