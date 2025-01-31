@@ -27,7 +27,6 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.main_activity)
 
-
         val navBar = findViewById<BottomNavigationView>(R.id.nav_bar)
 
         selectedFragment = savedInstanceState?.getInt("FragmentIndex") ?: 0

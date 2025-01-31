@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.csttine.utmn.lms.lmsnotifier.R
 import com.csttine.utmn.lms.lmsnotifier.parser.parse
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -136,7 +137,7 @@ class ScheduleFragment : Fragment() {
 
     private lateinit var viewModel : ScheduleViewModel
     private lateinit var recyclerView: RecyclerView
-    private lateinit var  adapter: CardViewAdapter
+    private lateinit var adapter: CardViewAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -164,9 +165,25 @@ class ScheduleFragment : Fragment() {
                     else{
                         "Время доступа: " + formatTimeStamps(data[0] as String) + "(Старое)"}
 
-
                     recyclerView = view.findViewById(R.id.recyclerView)
                     recyclerView.layoutManager = LinearLayoutManager(context)
+
+                    //Setting bottom padding
+                    val navBar = requireActivity().findViewById<BottomNavigationView>(R.id.nav_bar)
+                    var isListenerTriggered = false  //used to prevent redundant execution
+
+                    navBar.viewTreeObserver.addOnGlobalLayoutListener {
+                        if (isListenerTriggered) return@addOnGlobalLayoutListener  //stops execution
+                        isListenerTriggered = true
+                        Log.d("     SCHEDULE", navBar.height.toString())
+                        recyclerView.setPadding(
+                            recyclerView.paddingLeft,
+                            recyclerView.paddingTop,
+                            recyclerView.paddingRight,
+                            navBar.height)
+                        navBar.viewTreeObserver.removeOnGlobalLayoutListener{}
+                    }
+
                     recyclerView.isVisible = true
 
                     val titlesList = data[1] as MutableList<String>

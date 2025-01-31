@@ -1,24 +1,27 @@
 package com.csttine.utmn.lms.lmsnotifier.fragments
 
+import android.content.res.Resources
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
-import androidx.fragment.app.Fragment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.R
+import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragmentViewModel.Companion.isFirstCreation
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -67,7 +70,6 @@ class SettingsFragment : Fragment() {
             viewModel.password = SharedDS().get(requireContext(), "password")
             viewModel.passcode = SharedDS().get(requireContext(), "passcode")
         }
-
         emailEdit.setText(viewModel.email)
         passwordEdit.setText(viewModel.password)
         passcodeEdit.setText(viewModel.passcode)
@@ -76,6 +78,26 @@ class SettingsFragment : Fragment() {
         emailField.error = viewModel.emailFieldError
         passwordField.error = viewModel.passwordFieldError
         passcodeField.error = viewModel.passcodeFieldError
+
+
+        //disclaimer padding
+        var isListenerTriggered = false
+        val navBar = requireActivity().findViewById<BottomNavigationView>(R.id.nav_bar)
+
+        navBar.viewTreeObserver.addOnGlobalLayoutListener {
+            if (isListenerTriggered) return@addOnGlobalLayoutListener  //stops execution
+            isListenerTriggered = true
+            Log.d("     SETTINGS", navBar.height.toString())
+            val disclaimer = view.findViewById<TextView>(R.id.disclaimer)
+            disclaimer.setPadding(
+                disclaimer.paddingLeft,
+                disclaimer.paddingTop,
+                disclaimer.paddingRight,
+                navBar.height + (15 * Resources.getSystem().displayMetrics.density).toInt())  //15dp
+            navBar.viewTreeObserver.removeOnGlobalLayoutListener{}
+        }
+
+
 
         //listeners inside Dispatchers.IO to provide async & instant fragment switching
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main){
@@ -99,7 +121,6 @@ class SettingsFragment : Fragment() {
                         viewModel.emailFieldError = emailField.error
                     }
                 })
-
                 passwordEdit.addTextChangedListener(object : TextWatcher {
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
