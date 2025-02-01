@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">LMS &amp; LXP Notifier</string>
-    <string name="passcode_title">LMS &amp; LXP</string>
+    <string name="title_passcode">LMS &amp; LXP</string>
+    <string name="title_schedule">Schedule</string>
+    <string name="title_settings">Settings</string>
     <string name="welcome">Stay notified with the \nLMS &amp; LXP notifier</string>
     <string name="warning">This application is not officially developed by the UTMN\nVisit https://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>
     <string name="inputRequired">*Required</string>
@@ -37,7 +39,7 @@
     <string name="lock">Lock</string>
     <string name="settings">Settings</string>
     <string name="schedule">Schedule</string>
-    <!-- TODO: Remove or change this placeholder text -->
+    <!-- TODO: Remove or change this placeholder text-->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>

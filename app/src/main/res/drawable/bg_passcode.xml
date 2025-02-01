@@ -3,7 +3,5 @@
 
     <size
         android:height="15dp"
-        android:width="15dp">
-    </size>
-
+        android:width="15dp"/>
 </shape>

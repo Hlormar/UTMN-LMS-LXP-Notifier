@@ -44,7 +44,7 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
 
 
         val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(R.drawable.tyumgu_transformed)
+            .setSmallIcon(R.drawable.utmn_inv1_eng_eps)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
