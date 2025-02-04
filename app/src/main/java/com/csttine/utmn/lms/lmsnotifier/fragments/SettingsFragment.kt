@@ -87,7 +87,6 @@ class SettingsFragment : Fragment() {
         navBar.viewTreeObserver.addOnGlobalLayoutListener {
             if (isListenerTriggered) return@addOnGlobalLayoutListener  //stops execution
             isListenerTriggered = true
-            Log.d("     SETTINGS", navBar.height.toString())
             val disclaimer = view.findViewById<TextView>(R.id.disclaimer)
             disclaimer.setPadding(
                 disclaimer.paddingLeft,
