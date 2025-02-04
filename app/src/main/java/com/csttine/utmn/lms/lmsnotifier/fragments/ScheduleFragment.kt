@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.res.Resources
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +13,6 @@ import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
@@ -30,6 +28,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.util.Log
 import java.util.Date
 
 
@@ -83,6 +82,7 @@ class ScheduleViewModel : ViewModel(){
         val dataTemp = MutableLiveData<List<Any>>()
     }
 
+    var isFirstCreation = true
     val data : LiveData<List<Any>> = dataTemp
     private var text = ""
 
@@ -90,6 +90,7 @@ class ScheduleViewModel : ViewModel(){
         viewModelScope.launch {
             if (!isParsed){
                 isParsed = true
+                isFirstCreation = true
                 withContext(Dispatchers.IO) {
                     val mixedList = parse(context)
                     dataTemp.postValue(mixedList)
@@ -167,7 +168,7 @@ class ScheduleFragment : Fragment() {
                     infoText.text = if (data[8] == 0.toByte()){
                         "Время доступа: " + formatTimeStamps(data[0] as String)}
                     else{
-                        "Время доступа: " + formatTimeStamps(data[0] as String) + "(Старое)"}
+                        "Время доступа: " + formatTimeStamps(data[0] as String) + "\n(Старое)"}
 
                     recyclerView = view.findViewById(R.id.recyclerView)
                     recyclerView.layoutManager = LinearLayoutManager(context)
@@ -179,7 +180,6 @@ class ScheduleFragment : Fragment() {
                     navBar.viewTreeObserver.addOnGlobalLayoutListener {
                         if (isListenerTriggered) return@addOnGlobalLayoutListener  //stops execution
                         isListenerTriggered = true
-                        Log.d("     SCHEDULE", navBar.height.toString())
                         recyclerView.setPadding(
                             recyclerView.paddingLeft,
                             recyclerView.paddingTop,
@@ -191,14 +191,18 @@ class ScheduleFragment : Fragment() {
                     recyclerView.isVisible = true
 
                     val titlesList = data[1] as MutableList<String>
-                    val coursesList = data[5] as MutableList<String>
+                    val descriptionsList = data[5] as MutableList<String>
+                    val timestarts = data[3] as MutableList<String>
 
-                    for (i in 0..20) {
-                        titlesList.add("venom")
-                        coursesList.add("venom")
+                    // add dates to descriptions
+                    if (viewModel.isFirstCreation){
+                        viewModel.isFirstCreation = false
+                        for (i in descriptionsList.indices){
+                            descriptionsList[i] = "${descriptionsList[i]}\n${formatTimeStamps(timestarts[i])}"
+                        }
                     }
 
-                    adapter = CardViewAdapter(titlesList, coursesList, object : CardViewAdapter.OnItemClickListener {
+                    adapter = CardViewAdapter(titlesList, descriptionsList, object : CardViewAdapter.OnItemClickListener {
                         override fun onItemClick(position: Int) {
                             // Handle item click
                             //val clickedItem = titlesList[position]
