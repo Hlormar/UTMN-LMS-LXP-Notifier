@@ -43,6 +43,9 @@ class MainActivity : AppCompatActivity() {
         navBar.setOnItemSelectedListener {
             when (it.itemId){
                 R.id.menu_lock -> {
+                    ScheduleViewModel.isParsed = false
+                    ScheduleViewModel.dataTemp.postValue(listOf())
+                    SettingsFragmentViewModel.isFirstCreation.value = true
                     val intent = Intent(this, LockScreen::class.java)
                     startActivity(intent) // Start the new activity
                     finish()
