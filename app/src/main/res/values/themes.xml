@@ -7,7 +7,7 @@
         <item name="colorError">@color/error</item>
     </style>
 
-    <style name="LogoViewImage" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="LogoViewImage">
         <item name="android:paddingVertical">15dp</item>
         <item name="srcCompat">@drawable/utmn_inv1_eng_eps</item>
     </style>
@@ -52,6 +52,9 @@
         <item name="android:autoLink">web</item>
         <item name="android:textColorLink">@color/utmn</item>
         <item name="android:linksClickable">true</item>
+    </style>
 
+    <style name="PopupLayout">
+        <item name="cardBackgroundColor">@android:color/system_secondary_container_light</item>
     </style>
 </resources>

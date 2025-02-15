@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <style name="ButtonPasscode" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:background">@drawable/bg_passcode_ripple</item>
@@ -22,5 +22,9 @@
         <item name="srcCompat">@drawable/ic_input_delete_ripple</item>
         <item name="tint">@android:color/secondary_text_dark</item>
         <item name="android:backgroundTint">@android:color/transparent</item>
+    </style>
+
+    <style name="PopupLayout">
+        <item name="cardBackgroundColor">@android:color/system_secondary_container_dark</item>
     </style>
 </resources>

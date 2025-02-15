@@ -29,6 +29,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.util.Log
+import android.util.DisplayMetrics
+import android.view.WindowManager
+import androidx.appcompat.app.AppCompatActivity
+import com.csttine.utmn.lms.lmsnotifier.MainActivity
 import java.util.Date
 
 
@@ -144,6 +148,7 @@ class ScheduleFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CardViewAdapter
 
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View? {
@@ -153,7 +158,6 @@ class ScheduleFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         viewModel = ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
         viewModel.data.observe(viewLifecycleOwner) { data ->
             if (data.isNotEmpty()){
@@ -192,6 +196,7 @@ class ScheduleFragment : Fragment() {
 
                     val titlesList = data[1] as MutableList<String>
                     val descriptionsList = data[5] as MutableList<String>
+                    Log.d("     descr", descriptionsList.toString())
                     val timestarts = data[3] as MutableList<String>
 
                     // add dates to descriptions
@@ -202,20 +207,29 @@ class ScheduleFragment : Fragment() {
                         }
                     }
 
+//                    titlesList.add("Venom")
+//                    descriptionsList.add("Venom")
+
                     adapter = CardViewAdapter(titlesList, descriptionsList, object : CardViewAdapter.OnItemClickListener {
                         override fun onItemClick(position: Int) {
                             // Handle item click
                             //val clickedItem = titlesList[position]
                             //Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
+                            val windowManager = view.context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                            val displayMetrics = DisplayMetrics()
+                            windowManager.defaultDisplay.getMetrics(displayMetrics)
+                            val popupWidth = (displayMetrics.widthPixels * 0.95).toInt()
+                            val popupHeight = (displayMetrics.heightPixels * 0.85).toInt()
+
                             @SuppressLint("InflateParams")
-                            val popupLayout = layoutInflater.inflate(R.layout.popup_screen, null, false)
+                            val rootView = (requireActivity() as AppCompatActivity).findViewById<View>(android.R.id.content)
+                            val popupLayout = (requireActivity() as AppCompatActivity).layoutInflater.inflate(R.layout.popup_screen, null, false)
                             val popupWindow = PopupWindow(
                                 popupLayout,
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                popupWidth,
+                                popupHeight,
                                 true
-                            ).showAtLocation(view, Gravity.CENTER, 0, 0)
-
+                            ).showAtLocation(rootView, Gravity.CENTER, 0, 0)
                         }
                     })
                     recyclerView.adapter = adapter
