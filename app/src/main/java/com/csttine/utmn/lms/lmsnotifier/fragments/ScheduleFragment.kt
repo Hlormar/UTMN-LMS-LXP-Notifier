@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Resources
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
+import android.text.Html
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -30,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.util.Log
 import android.util.DisplayMetrics
-import android.view.WindowManager
+import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import com.csttine.utmn.lms.lmsnotifier.MainActivity
 import java.util.Date
@@ -42,10 +43,23 @@ fun formatTimeStamps(timestamp: String) :String {
     return format.format(Date(timestamp.toLong() * 1000)) //sec to mill sec
 }
 
+fun formatTimeStampsDuration(timestampStr: String) :String{
+    val timestamp = timestampStr.toLong() * 1000
+    val hours = (timestamp / (1000 * 60 * 60)) % 24
+    val minutes = (timestamp / (1000 * 60)) % 60
+    val seconds = (timestamp / 1000) % 60
+
+    return if (hours > 0) {
+        String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format("%02d:%02d", minutes, seconds)
+    }
+}
 
 private class CardViewAdapter(
     private val titlesList: List<String>,
     private val coursesList: List<String>,
+    private val timestarts: List<String>,
     private val listener: OnItemClickListener
 ) : RecyclerView.Adapter<CardViewAdapter.ViewHolder>() {
 
@@ -66,8 +80,9 @@ private class CardViewAdapter(
 
     // Binding the data to the ViewHolder
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val description = "${coursesList[position]}\n${formatTimeStamps(timestarts[position])}"
         holder.title.text = titlesList[position]
-        holder.description.text = coursesList[position]
+        holder.description.text = description
 
         // Set click listener on the entire card view
         holder.itemView.setOnClickListener {
@@ -144,9 +159,68 @@ class ScheduleViewModel : ViewModel(){
 
 class ScheduleFragment : Fragment() {
 
+    private var selectedNote :Int = -1
     private lateinit var viewModel : ScheduleViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CardViewAdapter
+
+
+    private fun popupNote(position: Int, mixedList: List<Any>){
+        @SuppressLint("InflateParams")
+        val rootView = (requireActivity() as AppCompatActivity).findViewById<View>(android.R.id.content)
+        val popupLayout = layoutInflater.inflate(R.layout.popup_screen, null, false)
+
+        popupLayout.findViewById<TextView>(R.id.activity).text = (mixedList[1] as List<String>)[position]
+        popupLayout.findViewById<TextView>(R.id.course).text = (mixedList[5] as List<String>)[position]
+        popupLayout.findViewById<TextView>(R.id.type).text = (mixedList[2] as List<String>)[position]
+        popupLayout.findViewById<TextView>(R.id.timestart).text = formatTimeStamps((mixedList[3] as List<String>)[position])
+        popupLayout.findViewById<TextView>(R.id.duration).text = formatTimeStampsDuration((mixedList[7] as List<String>)[position])
+        popupLayout.findViewById<TextView>(R.id.url).text = (mixedList[6] as List<String>)[position]
+        popupLayout.findViewById<TextView>(R.id.description).text = Html.fromHtml((mixedList[4] as List<String>)[position], Html.FROM_HTML_MODE_COMPACT)
+
+        val navBar = requireActivity().findViewById<BottomNavigationView>(R.id.nav_bar)
+        var isListenerTriggered = false  //used to prevent redundant onGlobalLayout listener execution
+
+        navBar.viewTreeObserver.addOnGlobalLayoutListener {
+            if (isListenerTriggered) return@addOnGlobalLayoutListener  //stops execution
+            isListenerTriggered = true
+            /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    val windowMetrics = windowManager.currentWindowMetrics
+    val bounds = windowMetrics.bounds
+    width = bounds.width()
+    height = bounds.height()
+} else {
+    val displayMetrics = DisplayMetrics()
+    @Suppress("DEPRECATION") // Temporarily suppress warning if you must use it
+    windowManager.defaultDisplay.getMetrics(displayMetrics)
+    width = displayMetrics.widthPixels
+    height = displayMetrics.heightPixels
+}*/
+
+            //make sizing, dimming, make card clickable, do translatein
+            navBar.viewTreeObserver.removeOnGlobalLayoutListener{}
+        }
+
+        val windowManager = requireActivity().windowManager
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        val popupWidth = (displayMetrics.widthPixels * 0.8).toInt()
+        val popupHeight = (displayMetrics.heightPixels * 0.8).toInt()
+        val popupWindow = PopupWindow(
+            popupLayout,
+            popupWidth,
+            popupHeight,
+            true
+        )
+
+        popupLayout.findViewById<ImageButton>(R.id.close).setOnClickListener{
+            popupWindow.dismiss()
+        }
+
+        popupWindow.isOutsideTouchable = true
+        popupWindow.isFocusable = true
+        popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0)
+    }
 
 
     override fun onCreateView(
@@ -166,6 +240,7 @@ class ScheduleFragment : Fragment() {
 
                 //setting info message
                 if (data[8] as Byte == (-1).toByte()) {
+                    infoText.textAlignment = View.TEXT_ALIGNMENT_CENTER
                     infoText.text = getString(R.string.scheduleErrorMsg)
                 }
                 else{
@@ -174,12 +249,20 @@ class ScheduleFragment : Fragment() {
                     else{
                         "Время доступа: " + formatTimeStamps(data[0] as String) + "\n(Старое)"}
 
+
+                    //restore opened note
+                    selectedNote = savedInstanceState?.getInt("selectedNote") ?: -1
+                    Log.d("     restoring", selectedNote.toString())
+                    if (selectedNote != -1){
+                        popupNote(selectedNote, data)
+                    }
+
                     recyclerView = view.findViewById(R.id.recyclerView)
                     recyclerView.layoutManager = LinearLayoutManager(context)
 
                     //Setting bottom padding
                     val navBar = requireActivity().findViewById<BottomNavigationView>(R.id.nav_bar)
-                    var isListenerTriggered = false  //used to prevent redundant execution
+                    var isListenerTriggered = false  //used to prevent redundant onGlobalLayout listener execution
 
                     navBar.viewTreeObserver.addOnGlobalLayoutListener {
                         if (isListenerTriggered) return@addOnGlobalLayoutListener  //stops execution
@@ -195,41 +278,35 @@ class ScheduleFragment : Fragment() {
                     recyclerView.isVisible = true
 
                     val titlesList = data[1] as MutableList<String>
-                    val descriptionsList = data[5] as MutableList<String>
-                    Log.d("     descr", descriptionsList.toString())
                     val timestarts = data[3] as MutableList<String>
 
                     // add dates to descriptions
+                    /*val descriptionsList =  data[5] as MutableList<String>
                     if (viewModel.isFirstCreation){
                         viewModel.isFirstCreation = false
                         for (i in descriptionsList.indices){
                             descriptionsList[i] = "${descriptionsList[i]}\n${formatTimeStamps(timestarts[i])}"
                         }
-                    }
+                    }*/
 
 //                    titlesList.add("Venom")
 //                    descriptionsList.add("Venom")
 
-                    adapter = CardViewAdapter(titlesList, descriptionsList, object : CardViewAdapter.OnItemClickListener {
+                    adapter = CardViewAdapter(titlesList, data[5] as List<String>, data[3] as List<String>, object : CardViewAdapter.OnItemClickListener {
                         override fun onItemClick(position: Int) {
                             // Handle item click
                             //val clickedItem = titlesList[position]
                             //Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
-                            val windowManager = view.context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                            /*val windowManager = view.context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
                             val displayMetrics = DisplayMetrics()
                             windowManager.defaultDisplay.getMetrics(displayMetrics)
                             val popupWidth = (displayMetrics.widthPixels * 0.95).toInt()
                             val popupHeight = (displayMetrics.heightPixels * 0.85).toInt()
+                            */
+                            popupNote(position, data)
+                            selectedNote = position
+                            Log.d("     pop-up", selectedNote.toString())
 
-                            @SuppressLint("InflateParams")
-                            val rootView = (requireActivity() as AppCompatActivity).findViewById<View>(android.R.id.content)
-                            val popupLayout = (requireActivity() as AppCompatActivity).layoutInflater.inflate(R.layout.popup_screen, null, false)
-                            val popupWindow = PopupWindow(
-                                popupLayout,
-                                popupWidth,
-                                popupHeight,
-                                true
-                            ).showAtLocation(rootView, Gravity.CENTER, 0, 0)
                         }
                     })
                     recyclerView.adapter = adapter
@@ -238,5 +315,13 @@ class ScheduleFragment : Fragment() {
         }
 
         viewModel.asyncParse(requireContext())
+    }
+
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.d("     saving", selectedNote.toString())
+        // not saving + shows on top
+        outState.putInt("selectedNote", selectedNote)
     }
 }

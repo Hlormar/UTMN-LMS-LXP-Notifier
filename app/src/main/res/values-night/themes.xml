@@ -25,6 +25,6 @@
     </style>
 
     <style name="PopupLayout">
-        <item name="cardBackgroundColor">@android:color/system_secondary_container_dark</item>
+        <item name="android:background">@drawable/bg_popup_night</item>
     </style>
 </resources>
