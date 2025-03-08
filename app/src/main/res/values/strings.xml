@@ -48,6 +48,8 @@
     <string name="popup_url">Calendar</string>
     <string name="popup_description">Description</string>
 
+    <string name="toast_incorrectEmail">Your username does not seem to be an email. Tried to transform %1$s -> %2$s, but translation feature may not work.</string>
+
     <!-- TODO: Remove or change this placeholder text-->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <!-- Preference Titles -->

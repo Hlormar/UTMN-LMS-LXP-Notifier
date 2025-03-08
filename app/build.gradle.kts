@@ -82,6 +82,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.com.google.android.material.material)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
+    implementation(libs.opennlp.tools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
