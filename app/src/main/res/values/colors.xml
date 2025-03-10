@@ -3,6 +3,7 @@
     <color name="indicator_empty">#DDDDDD</color>
     <color name="indicator_empty_dark">#303030</color>
     <color name="utmn">#00aeef</color>
+    <color name="utmn_lighter">#6600aeef</color>
     <color name="highlight">#7700abeb</color>
     <color name="error">#D32F2F</color>
     <color name="white">#FFFFFF</color>

@@ -26,9 +26,20 @@
     <string name="key9">9</string>
     <string name="key0">0</string>
 
+    <string name="settings_account">Account</string>
+    <string name="settings_notification">Notifications</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_translationFeature">Description RUS to ENG translation</string>
+
+    <string name="lang_current">English</string>
+    <string name="lang_eng">English</string>
+    <string name="lang_rus">Russian</string>
+
+
     <string name="hint_email">Email</string>
     <string name="hint_password">Password</string>
     <string name="hint_passcode">Passcode</string>
+    <string name="hint_lang">App language</string>
 
     <string name="contentDesc_logo">UTMN logo</string>
     <string name="contentDesc_backspace">backspace</string>

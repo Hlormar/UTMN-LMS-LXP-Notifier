@@ -9,6 +9,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
@@ -32,6 +34,7 @@ class SettingsFragmentViewModel : ViewModel(){
     var email = ""
     var password = ""
     var passcode = ""
+    var isTranslationEnabled = false
     var passwordEditInputType = (InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_CLASS_TEXT)
     var passcodeEditInputType = (InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)
     var isEmailEdited = false
@@ -60,6 +63,7 @@ class SettingsFragment : Fragment() {
         val passwordField = view.findViewById<TextInputLayout>(R.id.passwordLayout)
         val passcodeEdit = view.findViewById<TextInputEditText>(R.id.passcodeEdit)
         val passcodeField = view.findViewById<TextInputLayout>(R.id.passcodeLayout)
+        val translationSwitcher = view.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.translationSwitcher)
 
         viewModel = ViewModelProvider(requireActivity())[SettingsFragmentViewModel::class.java]
 
@@ -69,6 +73,14 @@ class SettingsFragment : Fragment() {
             viewModel.email = SharedDS().get(requireContext(), "email")
             viewModel.password = SharedDS().get(requireContext(), "password")
             viewModel.passcode = SharedDS().get(requireContext(), "passcode")
+            when (SharedDS().get(requireContext(),"Translation")) {
+                "1" -> {
+                    viewModel.isTranslationEnabled = true
+                    translationSwitcher.thumbTintList = requireContext().getColorStateList(R.color.utmn)
+                    translationSwitcher.trackTintList = requireContext().getColorStateList(R.color.utmn_lighter)
+                }
+                else -> viewModel.isTranslationEnabled = false
+            }
         }
         emailEdit.setText(viewModel.email)
         passwordEdit.setText(viewModel.password)
@@ -78,7 +90,7 @@ class SettingsFragment : Fragment() {
         emailField.error = viewModel.emailFieldError
         passwordField.error = viewModel.passwordFieldError
         passcodeField.error = viewModel.passcodeFieldError
-
+        translationSwitcher.isChecked = viewModel.isTranslationEnabled
 
         //disclaimer padding
         var isListenerTriggered = false
@@ -96,7 +108,10 @@ class SettingsFragment : Fragment() {
             navBar.viewTreeObserver.removeOnGlobalLayoutListener{}
         }
 
-
+        //attach language list to menu
+        val items = listOf(getString(R.string.lang_eng), getString(R.string.lang_rus))
+        val adapter = ArrayAdapter(requireContext(), R.layout.language_list, items)
+        view.findViewById<AutoCompleteTextView>(R.id.language_autocomplete).setAdapter(adapter)
 
         //listeners inside Dispatchers.IO to provide async & instant fragment switching
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main){
@@ -184,6 +199,24 @@ class SettingsFragment : Fragment() {
                     }
                     passcodeEdit.inputType = viewModel.passcodeEditInputType
                 }
+
+                translationSwitcher.setOnCheckedChangeListener{switcher, isChecked ->
+                    if (isChecked){
+                        //change on enabled state
+                        translationSwitcher.thumbTintList = requireContext().getColorStateList(R.color.utmn)
+                        translationSwitcher.trackTintList = requireContext().getColorStateList(R.color.utmn_lighter)
+                        SharedDS().writeStr(requireContext(), "Translation", "1")
+                    }
+                    else{
+                        //revert to default
+                        SharedDS().writeStr(requireContext(), "Translation", "")
+                        translationSwitcher.isUseMaterialThemeColors = true
+                    }
+
+                    viewModel.isTranslationEnabled = isChecked
+                    Log.d("     TRANSLATION SWITCHER", viewModel.isTranslationEnabled.toString())
+                }
+
             }
         }
 

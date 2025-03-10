@@ -57,4 +57,8 @@
     <style name="PopupLayout">
         <item name="android:background">@drawable/bg_popup</item>
     </style>
+
+    <style name="HorizontalDivider">
+        <item name="android:background">@android:drawable/divider_horizontal_bright</item>
+    </style>
 </resources>

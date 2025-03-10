@@ -27,4 +27,8 @@
     <style name="PopupLayout">
         <item name="android:background">@drawable/bg_popup_night</item>
     </style>
+
+    <style name="HorizontalDivider">
+        <item name="android:background">@android:drawable/divider_horizontal_dark</item>
+    </style>
 </resources>
