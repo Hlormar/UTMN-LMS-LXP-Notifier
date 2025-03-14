@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import com.csttine.utmn.lms.lmsnotifier.languageManager.ActivityBase
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +37,7 @@ class WelcomeActivityViewModel : ViewModel() {
 }
 
 
-class WelcomeActivity : AppCompatActivity() {
+class WelcomeActivity : ActivityBase() {
 
     private lateinit var viewModel : WelcomeActivityViewModel
 

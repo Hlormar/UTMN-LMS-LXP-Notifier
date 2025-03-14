@@ -1,0 +1,87 @@
+<resources>
+    <string name="app_name">LMS &amp; LXP Notifier</string>
+    <string name="title_passcode">LMS &amp; LXP</string>
+    <string name="title_schedule">Расписание</string>
+    <string name="title_settings">Настройки</string>
+    <string name="welcome">Получайте уведомления с помощью \nLMS &amp; LXP notifier</string>.
+    <string name="warning">Это приложение не является разработкой UTMN\nПодробнее https://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>.
+    <string name="inputRequired">*Обязательное поле</string>
+    <string name="unacceptableChars">*Недопустимые символы</string>
+    <string name="scheduleErrorMsg">
+        Что-то пошло не так\n
+        Проверьте подключение к сети\n
+        Или правильность логина и пароля\n
+        Или возможно сайт LMS сейчас лежит\n
+        бим бим бам бам 322\n
+        https://github.com/Hlormar/UTMN-LMS-LXP-Notifier
+    </string>
+    <string name="schedule_accessTime">Время доступа: %1$s</string>
+    <string name="schedule_outdated">Старое</string>
+
+    <string name="key1">1</string>
+    <string name="key2">2</string>
+    <string name="key3">3</string>
+    <string name="key4">4</string>
+    <string name="key5">5</string>
+    <string name="key6">6</string>
+    <string name="key7">7</string>
+    <string name="key8">8</string>
+    <string name="key9">9</string>
+    <string name="key0">0</string>
+
+    <string name="settings_account">Аккаунт</string>
+    <string name="settings_notification">Уведомления</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_translationFeature">Перевод описания с русского на английский</string>
+
+    <string name="lang_current">Русский</string>
+    <string name="lang_eng">Английский</string>
+    <string name="lang_rus">Русский</string>
+
+    <string name="hint_email">Почта</string>
+    <string name="hint_password">Пароль</string>
+    <string name="hint_passcode">Код доступа</string>
+    <string name="hint_lang">Язык интерфейса</string>
+
+    <string name="contentDesc_logo">Логотип ТюмГУ</string>
+    <string name="contentDesc_backspace">стереть</string>
+    <string name="contentDesc_cardviewTitle">Заголовок</string>
+    <string name="contentDesc_cardviewDesc">Описание</string>
+    <string name="contentDesc_infoText">Информация</string>
+    <string name="contentDesc_closePopup">Закрыть всплывающее окно</string>
+
+    <string name="lock">Блокировка</string>
+    <string name="settings">Настройки</string>
+    <string name="schedule">Расписание</string>
+
+    <string name="popup_course">Курс</string>
+    <string name="popup_type">Тип активности</string>
+    <string name="popup_timestart">Дата начала</string>
+    <string name="popup_duration">Продолжительность</string>
+    <string name="popup_url">Календарь</string>
+    <string name="popup_description">Описание</string>
+
+    <string name="notification_name">Задания LMS &amp; LXP</string>
+    <string name="notification_title">У вас новое задание</string>
+    <string name="notification_msg">Подробнее в приложении</string>
+    <string name="notification_upcoming">Скоро дедлайн</string>
+
+    <string name="toast_incorrectEmail">Ваше имя пользователя не похоже на электронную почту. Попытались исправить %1$s -> %2$s, но функция перевода может не работать.</string>
+
+    <!-- TODO: Remove or change this placeholder text-->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+</resources>

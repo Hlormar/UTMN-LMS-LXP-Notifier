@@ -5,13 +5,13 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.TextView
+import androidx.core.app.ActivityCompat.recreate
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.csttine.utmn.lms.lmsnotifier.R
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragmentViewModel.Companion.isFirstCreation
+import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -29,7 +30,7 @@ import kotlinx.coroutines.withContext
 
 class SettingsFragmentViewModel : ViewModel(){
     companion object {
-        var isFirstCreation = MutableLiveData<Boolean>(true)
+        var isFirstCreation = MutableLiveData(true)
     }
     var email = ""
     var password = ""
@@ -64,6 +65,7 @@ class SettingsFragment : Fragment() {
         val passcodeEdit = view.findViewById<TextInputEditText>(R.id.passcodeEdit)
         val passcodeField = view.findViewById<TextInputLayout>(R.id.passcodeLayout)
         val translationSwitcher = view.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.translationSwitcher)
+        val languageList = view.findViewById<AutoCompleteTextView>(R.id.language_autocomplete)
 
         viewModel = ViewModelProvider(requireActivity())[SettingsFragmentViewModel::class.java]
 
@@ -74,14 +76,11 @@ class SettingsFragment : Fragment() {
             viewModel.password = SharedDS().get(requireContext(), "password")
             viewModel.passcode = SharedDS().get(requireContext(), "passcode")
             when (SharedDS().get(requireContext(),"Translation")) {
-                "1" -> {
-                    viewModel.isTranslationEnabled = true
-                    translationSwitcher.thumbTintList = requireContext().getColorStateList(R.color.utmn)
-                    translationSwitcher.trackTintList = requireContext().getColorStateList(R.color.utmn_lighter)
-                }
+                "1" -> viewModel.isTranslationEnabled = true
                 else -> viewModel.isTranslationEnabled = false
             }
         }
+
         emailEdit.setText(viewModel.email)
         passwordEdit.setText(viewModel.password)
         passcodeEdit.setText(viewModel.passcode)
@@ -111,7 +110,13 @@ class SettingsFragment : Fragment() {
         //attach language list to menu
         val items = listOf(getString(R.string.lang_eng), getString(R.string.lang_rus))
         val adapter = ArrayAdapter(requireContext(), R.layout.language_list, items)
-        view.findViewById<AutoCompleteTextView>(R.id.language_autocomplete).setAdapter(adapter)
+        languageList.setAdapter(adapter)
+
+        //translation switcher colors
+        if (viewModel.isTranslationEnabled) {
+            translationSwitcher.thumbTintList = requireContext().getColorStateList(R.color.utmn)
+            translationSwitcher.trackTintList = requireContext().getColorStateList(R.color.utmn_lighter)
+        }
 
         //listeners inside Dispatchers.IO to provide async & instant fragment switching
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main){
@@ -200,7 +205,23 @@ class SettingsFragment : Fragment() {
                     passcodeEdit.inputType = viewModel.passcodeEditInputType
                 }
 
-                translationSwitcher.setOnCheckedChangeListener{switcher, isChecked ->
+                //TODO: fix the get life cycle exception error
+                languageList.setOnItemClickListener { parent, _, position, _ ->
+                    // Retrieve the selected item
+                    val selectedItem = when (parent.getItemAtPosition(position) as String) {
+                        getString(R.string.lang_rus) -> "ru"
+                        else -> "en"
+                    }
+                    if (selectedItem != LanguageManager().getCurrentLangCode(requireContext())){
+                        LanguageManager().updateLanguage(requireContext(), selectedItem)
+                        // Check if the activity is in a valid state
+                        if (!requireActivity().isFinishing && !requireActivity().isDestroyed) {
+                            recreate(requireActivity())
+                        }
+
+                    }
+                }
+                translationSwitcher.setOnCheckedChangeListener{_, isChecked ->
                     if (isChecked){
                         //change on enabled state
                         translationSwitcher.thumbTintList = requireContext().getColorStateList(R.color.utmn)
@@ -208,13 +229,14 @@ class SettingsFragment : Fragment() {
                         SharedDS().writeStr(requireContext(), "Translation", "1")
                     }
                     else{
-                        //revert to default
+                        //set to false + clean cache
                         SharedDS().writeStr(requireContext(), "Translation", "")
+                        SharedDS().writeStr(requireContext(), "isTranslated", "")
+                        SharedDS().clearStr(requireContext(), "translatedDescr")
                         translationSwitcher.isUseMaterialThemeColors = true
                     }
 
                     viewModel.isTranslationEnabled = isChecked
-                    Log.d("     TRANSLATION SWITCHER", viewModel.isTranslationEnabled.toString())
                 }
 
             }

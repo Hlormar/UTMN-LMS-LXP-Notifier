@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import com.csttine.utmn.lms.lmsnotifier.languageManager.ActivityBase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -23,7 +24,7 @@ class LockScreenViewModel : ViewModel(){
     var passLen = 0
 }
 
-class LockScreen : AppCompatActivity() {
+class LockScreen : ActivityBase() {
 
     private lateinit var viewModel : LockScreenViewModel
 

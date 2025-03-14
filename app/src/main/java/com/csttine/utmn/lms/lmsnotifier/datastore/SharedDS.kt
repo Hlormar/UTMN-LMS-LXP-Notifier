@@ -21,6 +21,10 @@ class SharedDS{
     fun writeStr(context: Context, key: String, value: String){
         runBlocking { context.dataStore.edit { prefs -> prefs[stringPreferencesKey(key)] = value } }
     }
+    fun clearStr(context: Context, key: String){
+        runBlocking { context.dataStore.edit { prefs -> prefs.remove(stringPreferencesKey(key))  } }
+    }
+
     fun getList(context: Context, key: String): MutableList<String>{
         return runBlocking {
             Json.decodeFromString((context.dataStore.data.first()[stringPreferencesKey(key)] ?: "[]"))

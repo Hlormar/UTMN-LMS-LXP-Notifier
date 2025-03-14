@@ -2,7 +2,6 @@ package com.csttine.utmn.lms.lmsnotifier.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Resources
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.text.Html
@@ -10,7 +9,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -33,13 +31,16 @@ import android.util.Log
 import android.util.DisplayMetrics
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
-import com.csttine.utmn.lms.lmsnotifier.MainActivity
+import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
+import com.csttine.utmn.lms.lmsnotifier.translator.Translator
 import java.util.Date
+import java.util.Locale
 
 
-fun formatTimeStamps(timestamp: String) :String {
+fun formatTimeStamps(timestamp: String, locale: String) :String {
     //formats with app locale
-    val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Resources.getSystem().configuration.locales[0])
+    val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Locale(locale, locale))
     return format.format(Date(timestamp.toLong() * 1000)) //sec to mill sec
 }
 
@@ -60,6 +61,7 @@ private class CardViewAdapter(
     private val titlesList: List<String>,
     private val coursesList: List<String>,
     private val timestarts: List<String>,
+    private val locale: String,
     private val listener: OnItemClickListener
 ) : RecyclerView.Adapter<CardViewAdapter.ViewHolder>() {
 
@@ -80,7 +82,7 @@ private class CardViewAdapter(
 
     // Binding the data to the ViewHolder
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val description = "${coursesList[position]}\n${formatTimeStamps(timestarts[position])}"
+        val description = "${coursesList[position]}\n${formatTimeStamps(timestarts[position], locale)}"
         holder.title.text = titlesList[position]
         holder.description.text = description
 
@@ -105,57 +107,70 @@ class ScheduleViewModel : ViewModel(){
     val data : LiveData<List<Any>> = dataTemp
     private var text = ""
 
+    //TODO: move offline part from parse() to separated func;
+    /*
+    val mixedList: mutableListOf<Any> = mutableListOf()
+    if (!isparsed) mixedList= online parse()
+    else mixedList = offline parse()
+
+    if(should translate)
+        if(is tanslated)
+            mixedlist[4] = sharedDS.getList("translated descr")
+        else
+            sharedDS.write(translated = 1)
+            for (i in range len(mixedlist[4]))
+                TODO: translate text extracted from html and then insert it back to html
+                if (mixedList[4][i] = russian)
+                    temp = translate(portion(split sentences(text from html(mixedList[4][i]))))
+                    mixedList[4][i] = insert text to html(temp)
+    datatemp.post(mixedlist)
+    */
+
     fun asyncParse(context: Context){
         viewModelScope.launch {
-            if (!isParsed){
-                isParsed = true
-                isFirstCreation = true
-                withContext(Dispatchers.IO) {
-                    val mixedList = parse(context)
-                    dataTemp.postValue(mixedList)
-                    /*val source = mixedList[8] as Byte
-                    if (source == (-1).toByte()){
-                        text = "Что-то пошло не так\n" +
-                                "Проверьте подключение к сети\n" +
-                                "Или правильность логина и пароля\n" +
-                                "Или возможно сайт LMS сейчас лежит\n" +
-                                "бим бим бам бам 322\n" +
-                                "https://github.com/Hlormar/UTMN-LMS-LXP-Notifier"
-                    } else {
-                        val accessTime = (mixedList[0] as String)
-                        text = if (source == 0.toByte()){
-                            "Время доступа: " + formatTimeStamps(accessTime) + "\n\n"}
-                        else{
-                            "Время доступа: " + formatTimeStamps(accessTime) + "(Старое) \n\n" }
-
-                        val activities = mixedList[1] as List<String>
-                        val activityTypes = mixedList[2] as List<String>
-                        val courseNames = mixedList[5] as List<String>
-                        val timeStarts = mixedList[3] as List<String>
-                        val timeDurations = mixedList[7] as List<String>
-                        val descriptions = mixedList[4] as List<String>
-                        val urls = mixedList[6] as List<String>
-
-                        for (i in activities.indices) {
-                            val temp = timeDurations[i].toLong()
-
-                            text += "Название: " + activities[i] + "\n"
-                            text += "Тип: " + activityTypes[i] + "\n"
-                            text += "Курс: " + courseNames[i] + "\n"
-                            text += "Время: " + formatTimeStamps(timeStarts[i]) + "\n"
-                            text += "Продолжительность: ${(temp / 3600)}:${((temp % 3600) / 60)}:${(temp % 60)}\n"
-                            text += "Календарь: " + urls[i] + "\n"
-                            text += "Описание: " + Html.fromHtml(
-                                descriptions[i],
-                                Html.FROM_HTML_MODE_COMPACT
-                            ) + "\n\n"
+            try {
+                if (!isParsed) {
+                    isParsed = true
+                    isFirstCreation = true
+                    withContext(Dispatchers.IO) {
+                        val mixedList = parse(context).toMutableList()
+                        val shouldTranslate = when(SharedDS().get(context, "Translation")){
+                            "1" -> true
+                            else -> false
                         }
-                    }*/
+                        val isTranslated = when (SharedDS().get(context, "isTranslated")){
+                            "1" -> true
+                            else -> false
+                        }
+
+                        if (shouldTranslate){
+                            if (isTranslated){
+                                Log.d("     TRANSLATING", "SHOULD + TRANSLATED")
+                                mixedList[4] = SharedDS().getList(context, "translatedDescr")
+                            }
+                            else{
+                                Log.d("     TRANSLATING", "SHOULD + NOT TRANSLATED")
+                                for (i in (mixedList[4] as List<String>).indices ){
+                                    val descr = (mixedList[4] as List<String>)[i]
+                                    Log.d("     TRANSLATING", "detectlang of $i ${Translator().detectLanguage(descr)}")
+                                    Log.d("     TRANSLATING", "Sentences of $i ${Translator().splitRuTextIntoSentences(descr)}")
+                                    Log.d("     TRANSLATING", "Portion of $i ${Translator().portionSentences(Translator().splitRuTextIntoSentences(descr))}")
+
+                                }
+                                //SharedDS().writeStr(context, "isTranslated", "1")
+                            }
+                        }
+
+                        dataTemp.postValue(mixedList)
+                    }
                 }
+            } catch (e: Exception){
+                Log.e("     asyncParse()", "${e.message}", e)
             }
         }
     }
 }
+
 
 class ScheduleFragment : Fragment() {
 
@@ -165,7 +180,7 @@ class ScheduleFragment : Fragment() {
     private lateinit var adapter: CardViewAdapter
 
 
-    private fun popupNote(position: Int, mixedList: List<Any>){
+    private fun popupNote(position: Int, mixedList: List<Any>, locale: String){
         @SuppressLint("InflateParams")
         val rootView = (requireActivity() as AppCompatActivity).findViewById<View>(android.R.id.content)
         val popupLayout = layoutInflater.inflate(R.layout.popup_screen, null, false)
@@ -173,7 +188,7 @@ class ScheduleFragment : Fragment() {
         popupLayout.findViewById<TextView>(R.id.activity).text = (mixedList[1] as List<String>)[position]
         popupLayout.findViewById<TextView>(R.id.course).text = (mixedList[5] as List<String>)[position]
         popupLayout.findViewById<TextView>(R.id.type).text = (mixedList[2] as List<String>)[position]
-        popupLayout.findViewById<TextView>(R.id.timestart).text = formatTimeStamps((mixedList[3] as List<String>)[position])
+        popupLayout.findViewById<TextView>(R.id.timestart).text = formatTimeStamps((mixedList[3] as List<String>)[position], locale)
         popupLayout.findViewById<TextView>(R.id.duration).text = formatTimeStampsDuration((mixedList[7] as List<String>)[position])
         popupLayout.findViewById<TextView>(R.id.url).text = (mixedList[6] as List<String>)[position]
         popupLayout.findViewById<TextView>(R.id.description).text = Html.fromHtml((mixedList[4] as List<String>)[position], Html.FROM_HTML_MODE_COMPACT)
@@ -197,15 +212,15 @@ class ScheduleFragment : Fragment() {
     height = displayMetrics.heightPixels
 }*/
 
-            //make sizing, dimming, make card clickable, do translatein
+            //TODO: make sizing, dimming, make card clickable, do translatein
             navBar.viewTreeObserver.removeOnGlobalLayoutListener{}
         }
 
         val windowManager = requireActivity().windowManager
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
-        val popupWidth = (displayMetrics.widthPixels * 0.8).toInt()
-        val popupHeight = (displayMetrics.heightPixels * 0.8).toInt()
+        val popupWidth = (displayMetrics.widthPixels * 0.9).toInt()
+        val popupHeight = (displayMetrics.heightPixels * 0.85).toInt()
         val popupWindow = PopupWindow(
             popupLayout,
             popupWidth,
@@ -238,23 +253,23 @@ class ScheduleFragment : Fragment() {
                 val infoText = view.findViewById<TextView>(R.id.infoText)
                 view.findViewById<ProgressBar>(R.id.loadingAnim).isVisible = false
 
+                val locale = LanguageManager().getCurrentLangCode(requireContext())
+
                 //setting info message
                 if (data[8] as Byte == (-1).toByte()) {
                     infoText.textAlignment = View.TEXT_ALIGNMENT_CENTER
                     infoText.text = getString(R.string.scheduleErrorMsg)
                 }
                 else{
-                    infoText.text = if (data[8] == 0.toByte()){
-                        "Время доступа: " + formatTimeStamps(data[0] as String)}
-                    else{
-                        "Время доступа: " + formatTimeStamps(data[0] as String) + "\n(Старое)"}
+                    infoText.text = if (data[8] == 0.toByte()) getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, locale))
+                    else getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, locale)) + " (" + getString(R.string.schedule_outdated) + ")"
 
 
                     //restore opened note
                     selectedNote = savedInstanceState?.getInt("selectedNote") ?: -1
                     Log.d("     restoring", selectedNote.toString())
                     if (selectedNote != -1){
-                        popupNote(selectedNote, data)
+                        popupNote(selectedNote, data, locale)
                     }
 
                     recyclerView = view.findViewById(R.id.recyclerView)
@@ -278,32 +293,11 @@ class ScheduleFragment : Fragment() {
                     recyclerView.isVisible = true
 
                     val titlesList = data[1] as MutableList<String>
-                    val timestarts = data[3] as MutableList<String>
 
-                    // add dates to descriptions
-                    /*val descriptionsList =  data[5] as MutableList<String>
-                    if (viewModel.isFirstCreation){
-                        viewModel.isFirstCreation = false
-                        for (i in descriptionsList.indices){
-                            descriptionsList[i] = "${descriptionsList[i]}\n${formatTimeStamps(timestarts[i])}"
-                        }
-                    }*/
 
-//                    titlesList.add("Venom")
-//                    descriptionsList.add("Venom")
-
-                    adapter = CardViewAdapter(titlesList, data[5] as List<String>, data[3] as List<String>, object : CardViewAdapter.OnItemClickListener {
+                    adapter = CardViewAdapter(titlesList, data[5] as List<String>, data[3] as List<String>, locale, object : CardViewAdapter.OnItemClickListener {
                         override fun onItemClick(position: Int) {
-                            // Handle item click
-                            //val clickedItem = titlesList[position]
-                            //Toast.makeText(context, "Clicked: ${clickedItem}", Toast.LENGTH_SHORT).show()
-                            /*val windowManager = view.context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-                            val displayMetrics = DisplayMetrics()
-                            windowManager.defaultDisplay.getMetrics(displayMetrics)
-                            val popupWidth = (displayMetrics.widthPixels * 0.95).toInt()
-                            val popupHeight = (displayMetrics.heightPixels * 0.85).toInt()
-                            */
-                            popupNote(position, data)
+                            popupNote(position, data, locale)
                             selectedNote = position
                             Log.d("     pop-up", selectedNote.toString())
 

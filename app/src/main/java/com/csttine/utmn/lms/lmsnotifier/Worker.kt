@@ -10,19 +10,17 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.fragments.formatTimeStamps
+import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
 import com.csttine.utmn.lms.lmsnotifier.parser.parse
 
 class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
-    //val dS = appContext.dataStore
 
     private fun sendNotification(title: String, message: String, notificationId: Int) {
         val channelId = "lms_not_id"
         val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
-
         val channel = NotificationChannel(
             channelId,
-            "LMS & LXP tasks",
+            applicationContext.getString(R.string.notification_name),
             NotificationManager.IMPORTANCE_DEFAULT
 
         ).apply {
@@ -64,18 +62,22 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
             if (isPeriodic){
                 if (parse(applicationContext)[9] as Boolean){
                     //notify
-                    sendNotification("You got a new task","Please check the application for more details", -1)
+                    sendNotification(applicationContext.getString(R.string.notification_title),applicationContext.getString(R.string.notification_msg), -1)
                 }
                 else{
                     //do nothing or test
-                    sendNotification("test","just working", -1)
+                    sendNotification("test","just working ${LanguageManager().getCurrentLangCode(applicationContext)}", -1)
+                    sendNotification(applicationContext.getString(R.string.notification_upcoming), SharedDS().getList(applicationContext, "activities")[0] +
+                            " at ${formatTimeStamps(SharedDS().getList(applicationContext, "timeStarts")[0], LanguageManager().getCurrentLangCode(applicationContext))}", 0)
+                    sendNotification(applicationContext.getString(R.string.notification_title),applicationContext.getString(R.string.notification_msg), -1)
+
                 }
             }
 
             else {
                 val scheduleActivityIndex = inputData.getInt("scheduleActivityIndex", -1)
-                sendNotification("Upcoming deadline", SharedDS().getList(applicationContext, "activities")[scheduleActivityIndex] +
-                        " at ${formatTimeStamps(SharedDS().getList(applicationContext, "timeStarts")[scheduleActivityIndex])}", scheduleActivityIndex)
+                sendNotification(applicationContext.getString(R.string.notification_upcoming), SharedDS().getList(applicationContext, "activities")[scheduleActivityIndex] +
+                        " at ${formatTimeStamps(SharedDS().getList(applicationContext, "timeStarts")[scheduleActivityIndex], LanguageManager().getCurrentLangCode(applicationContext))}", scheduleActivityIndex)
             }
 
         }

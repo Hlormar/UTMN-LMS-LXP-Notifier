@@ -9,10 +9,11 @@ import com.csttine.utmn.lms.lmsnotifier.fragments.ScheduleFragment
 import com.csttine.utmn.lms.lmsnotifier.fragments.ScheduleViewModel
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragment
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragmentViewModel
+import com.csttine.utmn.lms.lmsnotifier.languageManager.ActivityBase
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ActivityBase() {
 
     private var selectedFragment = 0
 
