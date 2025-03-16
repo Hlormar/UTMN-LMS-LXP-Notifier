@@ -62,12 +62,14 @@
     <string name="popup_description">Description</string>
 
     <string name="notification_name">LMS &amp; LXP tasks</string>
-    <string name="notification_title">You got a new task</string>
-    <string name="notification_msg">Please check the application for more details</string>
-    <string name="notification_upcoming">Upcoming deadline</string>
+    <string name="notification_incoming_title">You got a new task</string>
+    <string name="notification_incoming_msg">Please check the application for more details</string>
+    <string name="notification_upcoming_title">Upcoming deadline</string>
+    <string name="notification_upcoming_msg">%1$s at %2$s</string>
 
 
     <string name="toast_incorrectEmail">Your username does not seem to be an email. Tried to transform %1$s -> %2$s, but translation feature may not work.</string>
+    <string name="toast_translating">Data received. Translating…</string>
 
     <!-- TODO: Remove or change this placeholder text-->
     <string name="hello_blank_fragment">Hello blank fragment</string>

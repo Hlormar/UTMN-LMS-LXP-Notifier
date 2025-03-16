@@ -62,11 +62,13 @@
     <string name="popup_description">Описание</string>
 
     <string name="notification_name">Задания LMS &amp; LXP</string>
-    <string name="notification_title">У вас новое задание</string>
-    <string name="notification_msg">Подробнее в приложении</string>
-    <string name="notification_upcoming">Скоро дедлайн</string>
+    <string name="notification_incoming_title">У вас новое задание</string>
+    <string name="notification_incoming_msg">Подробнее в приложении</string>
+    <string name="notification_upcoming_title">Скоро дедлайн</string>
+    <string name="notification_upcoming_msg">%1$s в %2$s</string>
 
     <string name="toast_incorrectEmail">Ваше имя пользователя не похоже на электронную почту. Попытались исправить %1$s -> %2$s, но функция перевода может не работать.</string>
+    <string name="toast_translating">Данные получены. Переводим…</string>
 
     <!-- TODO: Remove or change this placeholder text-->
     <string name="hello_blank_fragment">Hello blank fragment</string>

@@ -232,7 +232,10 @@ class SettingsFragment : Fragment() {
                         //set to false + clean cache
                         SharedDS().writeStr(requireContext(), "Translation", "")
                         SharedDS().writeStr(requireContext(), "isTranslated", "")
-                        SharedDS().clearStr(requireContext(), "translatedDescr")
+                        SharedDS().clearStr(requireContext(), "translated_descriptions")
+                        SharedDS().clearStr(requireContext(), "translated_activities")
+                        SharedDS().clearStr(requireContext(), "translated_coursesNames")
+
                         translationSwitcher.isUseMaterialThemeColors = true
                     }
 

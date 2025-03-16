@@ -2,7 +2,6 @@ package com.csttine.utmn.lms.lmsnotifier.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.text.Html
 import android.view.Gravity
@@ -30,30 +29,26 @@ import kotlinx.coroutines.withContext
 import android.util.Log
 import android.util.DisplayMetrics
 import android.widget.ImageButton
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
+import com.csttine.utmn.lms.lmsnotifier.parser.formatTimeStamps
+import com.csttine.utmn.lms.lmsnotifier.parser.parseOffline
 import com.csttine.utmn.lms.lmsnotifier.translator.Translator
-import java.util.Date
 import java.util.Locale
 
 
-fun formatTimeStamps(timestamp: String, locale: String) :String {
-    //formats with app locale
-    val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Locale(locale, locale))
-    return format.format(Date(timestamp.toLong() * 1000)) //sec to mill sec
-}
-
-fun formatTimeStampsDuration(timestampStr: String) :String{
+fun formatTimeStampsDuration(timestampStr: String, locale: String) :String{
     val timestamp = timestampStr.toLong() * 1000
     val hours = (timestamp / (1000 * 60 * 60)) % 24
     val minutes = (timestamp / (1000 * 60)) % 60
     val seconds = (timestamp / 1000) % 60
 
     return if (hours > 0) {
-        String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        String.format(Locale(locale, locale), "%02d:%02d:%02d", hours, minutes, seconds)
     } else {
-        String.format("%02d:%02d", minutes, seconds)
+        String.format(Locale(locale, locale),"%02d:%02d", minutes, seconds)
     }
 }
 
@@ -103,66 +98,112 @@ class ScheduleViewModel : ViewModel(){
         val dataTemp = MutableLiveData<List<Any>>()
     }
 
-    var isFirstCreation = true
+    //var isFirstCreation = true
     val data : LiveData<List<Any>> = dataTemp
-    private var text = ""
-
-    //TODO: move offline part from parse() to separated func;
-    /*
-    val mixedList: mutableListOf<Any> = mutableListOf()
-    if (!isparsed) mixedList= online parse()
-    else mixedList = offline parse()
-
-    if(should translate)
-        if(is tanslated)
-            mixedlist[4] = sharedDS.getList("translated descr")
-        else
-            sharedDS.write(translated = 1)
-            for (i in range len(mixedlist[4]))
-                TODO: translate text extracted from html and then insert it back to html
-                if (mixedList[4][i] = russian)
-                    temp = translate(portion(split sentences(text from html(mixedList[4][i]))))
-                    mixedList[4][i] = insert text to html(temp)
-    datatemp.post(mixedlist)
-    */
 
     fun asyncParse(context: Context){
         viewModelScope.launch {
             try {
-                if (!isParsed) {
-                    isParsed = true
-                    isFirstCreation = true
-                    withContext(Dispatchers.IO) {
-                        val mixedList = parse(context).toMutableList()
-                        val shouldTranslate = when(SharedDS().get(context, "Translation")){
-                            "1" -> true
-                            else -> false
-                        }
-                        val isTranslated = when (SharedDS().get(context, "isTranslated")){
-                            "1" -> true
-                            else -> false
-                        }
+                withContext(Dispatchers.IO){
+                    //===================Parse=========================
+                    var mixedList: MutableList<Any> = if (isParsed) parseOffline(context).toMutableList()
+                    else {
+                        isParsed = true
+                        parse(context).toMutableList()
+                    }
 
-                        if (shouldTranslate){
-                            if (isTranslated){
-                                Log.d("     TRANSLATING", "SHOULD + TRANSLATED")
-                                mixedList[4] = SharedDS().getList(context, "translatedDescr")
+                    //===================Translate=========================
+                    val shouldTranslate = when(SharedDS().get(context, "Translation")){
+                        "1" -> true
+                        else -> false
+                    }
+                    val isTranslated = when (SharedDS().get(context, "isTranslated")){
+                        "1" -> true
+                        else -> false
+                    }
+
+                    if (shouldTranslate && (mixedList[8] as Byte) != (-1).toByte()){
+                        if (isTranslated){
+                            Log.d("     TRANSLATING", "TRANSLATED")
+                            mixedList[4] = SharedDS().getList(context, "translated_descriptions")
+                            mixedList[1] = SharedDS().getList(context, "translated_activities")
+                            mixedList[5] = SharedDS().getList(context, "translated_coursesNames")
+
+                        }
+                        else{
+                            Log.d("     TRANSLATING", "NOT TRANSLATED")
+                            withContext(Dispatchers.Main){
+                                Toast.makeText(context, context.getString(R.string.toast_translating), Toast.LENGTH_LONG).show()
                             }
-                            else{
-                                Log.d("     TRANSLATING", "SHOULD + NOT TRANSLATED")
-                                for (i in (mixedList[4] as List<String>).indices ){
-                                    val descr = (mixedList[4] as List<String>)[i]
-                                    Log.d("     TRANSLATING", "detectlang of $i ${Translator().detectLanguage(descr)}")
-                                    Log.d("     TRANSLATING", "Sentences of $i ${Translator().splitRuTextIntoSentences(descr)}")
-                                    Log.d("     TRANSLATING", "Portion of $i ${Translator().portionSentences(Translator().splitRuTextIntoSentences(descr))}")
+                            val translator = Translator()
+                            val cyrillicLanguages = listOf("rus", "bel", "ukr", "bul", "srp", "mkd", "kaz",
+                                "tgk", "tat", "kir", "uzb", "bak", "che", "mon")
+                            // opennlp may detect lang not correctly
+                            val descriptions = mixedList[4] as List<String>
+                            val titles = mixedList[1] as List<String>
+                            val courses = mixedList[5] as List<String>
+                            val coursesTranslationMap: MutableMap<String, String> = mutableMapOf() // stores pairs of course : translation to speed up
+
+                            for (i in (titles).indices ){
+                                var descr = descriptions[i]
+                                val course = courses[i]
+                                var title = titles[i]
+                                var chunksActivitie: MutableList<String>
+                                var chunksCourse: MutableList<String>
+                                var chunksDescription: MutableList<String>
+
+                                // Activities
+                                if (translator.detectLanguage(title) in cyrillicLanguages){
+                                    chunksActivitie = translator.portionSentences(translator.splitRuTextIntoSentences(title)).toMutableList()
+                                    Log.d("     TRANSLATING TITLE", "Title chunks $chunksActivitie")
+                                    title = ""
+                                    for (chunk in chunksActivitie) {
+                                        title += translator.translateRuToEn(context, chunk)
+                                    }
+                                    Log.d("     TRANSLATING TITLE", "Translated title $title")
+                                    (mixedList[1] as MutableList<String>)[i] = title
+                                } else Log.d("      TRANSLATING TITLE", "lang of title $i is ${translator.detectLanguage(title)}")
+
+                                // Courses names
+                                if (coursesTranslationMap.containsKey(course)){
+                                  Log.d("TRANSLATING COURSE", "course $i already translated")
+                                    (mixedList[5] as MutableList<String>)[i] = coursesTranslationMap[course]!!
+                                } else {
+                                    if (translator.detectLanguage(course) in cyrillicLanguages){
+                                        chunksCourse = translator.portionSentences(listOf(course)).toMutableList()
+                                        Log.d("     TRANSLATING COURSE", "Course chunks $chunksCourse")
+                                        var courseNew = ""
+                                        for (chunk in chunksCourse) {
+                                            courseNew += translator.translateRuToEn(context, chunk)
+                                        }
+                                        Log.d("     TRANSLATING COURSE", "Translated course $courseNew")
+                                        coursesTranslationMap[course] = courseNew
+                                        (mixedList[5] as MutableList<String>)[i] = courseNew
+                                    } else Log.d("      TRANSLATING COURSE", "lang of course $i is ${translator.detectLanguage(course)}")
 
                                 }
-                                //SharedDS().writeStr(context, "isTranslated", "1")
+                                //Descriptions
+                                if (translator.detectLanguage(descr) in cyrillicLanguages){
+                                    chunksDescription = translator.portionSentences(translator.splitRuTextIntoSentences(descr)).toMutableList()
+                                    Log.d("     TRANSLATING DESCR", "Descr chunks $chunksDescription")
+                                    descr = ""
+                                    for (chunk in chunksDescription) {
+                                        descr += translator.translateRuToEn(context, chunk)
+                                    }
+                                    Log.d("     TRANSLATING DESCR", "Translated descr $descr")
+                                    (mixedList[4] as MutableList<String>)[i] = descr
+                                } else Log.d("      TRANSLATING DESCR", "lang of descr $i is ${translator.detectLanguage(descr)}")
                             }
+                            SharedDS().writeStr(context, "isTranslated", "1")
+                            Log.d("TRANSLATING", "FINISH ${SharedDS().get(context, "isTranslated")}")
+                            SharedDS().writeList(context, "translated_activities", mixedList[1] as MutableList<String>)
+                            SharedDS().writeList(context, "translated_descriptions", mixedList[4] as MutableList<String>)
+                            SharedDS().writeList(context, "translated_coursesNames", mixedList[5] as MutableList<String>)
+                            //write translations to ds
                         }
-
-                        dataTemp.postValue(mixedList)
                     }
+
+                    dataTemp.postValue(mixedList)
                 }
             } catch (e: Exception){
                 Log.e("     asyncParse()", "${e.message}", e)
@@ -189,7 +230,7 @@ class ScheduleFragment : Fragment() {
         popupLayout.findViewById<TextView>(R.id.course).text = (mixedList[5] as List<String>)[position]
         popupLayout.findViewById<TextView>(R.id.type).text = (mixedList[2] as List<String>)[position]
         popupLayout.findViewById<TextView>(R.id.timestart).text = formatTimeStamps((mixedList[3] as List<String>)[position], locale)
-        popupLayout.findViewById<TextView>(R.id.duration).text = formatTimeStampsDuration((mixedList[7] as List<String>)[position])
+        popupLayout.findViewById<TextView>(R.id.duration).text = formatTimeStampsDuration((mixedList[7] as List<String>)[position], LanguageManager().getCurrentLangCode(requireContext()))
         popupLayout.findViewById<TextView>(R.id.url).text = (mixedList[6] as List<String>)[position]
         popupLayout.findViewById<TextView>(R.id.description).text = Html.fromHtml((mixedList[4] as List<String>)[position], Html.FROM_HTML_MODE_COMPACT)
 

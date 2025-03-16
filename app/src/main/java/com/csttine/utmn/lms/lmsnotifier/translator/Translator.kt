@@ -136,8 +136,9 @@ class Translator {
                 )
 
                 // return the translation
+                val jsonBuilder = Json{ignoreUnknownKeys = true}
                 return@withContext  if (response.isSuccessful) {
-                    Json.decodeFromString<TranslationResponse>(response.body().string()).responseData.translatedText
+                    jsonBuilder.decodeFromString<TranslationResponse>(response.body().string()).responseData.translatedText
                 } else (raw)
 
 

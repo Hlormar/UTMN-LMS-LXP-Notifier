@@ -1,6 +1,8 @@
 package com.csttine.utmn.lms.lmsnotifier.parser
 
 import android.content.Context
+import android.icu.text.SimpleDateFormat
+import android.util.Log
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -9,10 +11,48 @@ import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.csttine.utmn.lms.lmsnotifier.WorkRuntime
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
+fun formatTimeStamps(timestamp: String, locale: String) :String {
+    //formats with app locale
+    val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Locale(locale, locale))
+    return format.format(Date(timestamp.toLong() * 1000)) //sec to mill sec
+}
+
+
+fun parseOffline (context: Context) :List<Any>{
+    Log.d("     Parser",    "Parsing offline")
+    var activities: MutableList<String> = mutableListOf()
+    var activityTypes: MutableList<String> = mutableListOf()
+    var timeStarts: MutableList<String> = mutableListOf()
+    var timeDurations: MutableList<String> = mutableListOf()
+    var descriptions: MutableList<String> = mutableListOf()
+    var coursesNames: MutableList<String> = mutableListOf()
+    var urls: MutableList<String> = mutableListOf()
+    var accessTime = SharedDS().get(context, "accessTime")
+    var source: Byte = -1  //-1 = error; 0 = new; 1 = old
+    val areThereNewTasks = false
+
+    if (accessTime != ""){
+        source = 1
+        activities = SharedDS().getList(context, "activities")
+        activityTypes = SharedDS().getList(context, "activityTypes")
+        timeStarts = SharedDS().getList(context, "timeStarts")
+        timeDurations = SharedDS().getList(context, "timeDurations")
+        descriptions = SharedDS().getList(context, "descriptions")
+        coursesNames = SharedDS().getList(context, "coursesNames")
+        urls = SharedDS().getList(context, "URLs")
+        accessTime = SharedDS().get(context, "accessTime")
+    }
+    return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
+}
+
+
 fun parse(context: Context) :List<Any> {
+    Log.d("     Parser", "Parsing online")
     if (!Python.isStarted()) {
         Python.start(AndroidPlatform(context))
     }
@@ -27,23 +67,23 @@ fun parse(context: Context) :List<Any> {
         SharedDS().writeStr(context, "token", token)
     }
 
-    var activities: MutableList<String> = mutableListOf()
-    var activityTypes: MutableList<String> = mutableListOf()
-    var timeStarts: MutableList<String> = mutableListOf()
-    var timeDurations: MutableList<String> = mutableListOf()
-    var descriptions: MutableList<String> = mutableListOf()
-    var coursesNames: MutableList<String> = mutableListOf()
-    var urls: MutableList<String> = mutableListOf()
-    var accessTime = ""
+
     var source: Byte = -1  //-1 = error; 0 = new; 1 = old
-    var areThereNewTasks = false
     var jsonDict = PyObject.fromJava("-1")
     if (token != "-1"){
         jsonDict = pyModule.callAttr("formatDict", pyModule.callAttr("getCalendar", token))}
 
-    //NEW
-    if (jsonDict.toString() != "-1") {
+    return if (jsonDict.toString() != "-1") {
         source = 0
+        var activities: MutableList<String> = mutableListOf()
+        var activityTypes: MutableList<String> = mutableListOf()
+        var timeStarts: MutableList<String> = mutableListOf()
+        var timeDurations: MutableList<String> = mutableListOf()
+        var descriptions: MutableList<String> = mutableListOf()
+        var coursesNames: MutableList<String> = mutableListOf()
+        var urls: MutableList<String> = mutableListOf()
+        var areThereNewTasks = false
+        var accessTime = ""
         val events = jsonDict.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
         accessTime = jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp")).toString()
 
@@ -62,6 +102,7 @@ fun parse(context: Context) :List<Any> {
 
         //re-enqueue if there are new tasks
         if (!SharedDS().getList(context, "activities").containsAll(activities)) {
+            SharedDS().writeStr(context, "isTranslated", "")
             areThereNewTasks = true
             for (i in activities.indices) {
                 var delaySex = timeStarts[i].toLong() - (System.currentTimeMillis() / 1000)
@@ -95,21 +136,9 @@ fun parse(context: Context) :List<Any> {
         SharedDS().writeList(context, "descriptions", descriptions)
         SharedDS().writeList(context, "coursesNames", coursesNames)
         SharedDS().writeList(context, "URLs", urls)
-
+        //TODO: rearrange
+        listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
     }
-    //OLD
-    else if (SharedDS().get(context, "accessTime") != ""){
-        source = 1
-        activities = SharedDS().getList(context, "activities")
-        activityTypes = SharedDS().getList(context, "activityTypes")
-        timeStarts = SharedDS().getList(context, "timeStarts")
-        timeDurations = SharedDS().getList(context, "timeDurations")
-        descriptions = SharedDS().getList(context, "descriptions")
-        coursesNames = SharedDS().getList(context, "coursesNames")
-        urls = SharedDS().getList(context, "URLs")
-        accessTime = SharedDS().get(context, "accessTime")
-    }
-
-    //TODO: rearrange
-    return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
+    //Offline
+    else parseOffline(context)
 }

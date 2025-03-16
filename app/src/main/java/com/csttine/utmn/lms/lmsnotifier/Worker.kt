@@ -5,11 +5,12 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
-import com.csttine.utmn.lms.lmsnotifier.fragments.formatTimeStamps
+import com.csttine.utmn.lms.lmsnotifier.parser.formatTimeStamps
 import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
 import com.csttine.utmn.lms.lmsnotifier.parser.parse
 
@@ -60,24 +61,51 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
 
         if (SharedDS().get(applicationContext, "passcode") != ""){
             if (isPeriodic){
+                //check if there are new assignments
                 if (parse(applicationContext)[9] as Boolean){
                     //notify
-                    sendNotification(applicationContext.getString(R.string.notification_title),applicationContext.getString(R.string.notification_msg), -1)
+                    sendNotification(applicationContext.getString(R.string.notification_incoming_title),applicationContext.getString(R.string.notification_incoming_msg), -1)
                 }
                 else{
                     //do nothing or test
-                    sendNotification("test","just working ${LanguageManager().getCurrentLangCode(applicationContext)}", -1)
+                    val activity = if(SharedDS().get(applicationContext,"Translation") == "1")
+                        SharedDS().getList(applicationContext, "activities")[0]
+                    else
+                        SharedDS().getList(applicationContext, "translated_activities")[0]
+
+
+                    sendNotification(applicationContext.getString(R.string.notification_upcoming_title),
+                        applicationContext.getString(R.string.notification_upcoming_msg, activity,
+                            formatTimeStamps(SharedDS().getList(
+                                applicationContext, "timeStarts")[0],
+                                LanguageManager().getCurrentLangCode(applicationContext))
+                        ),
+                        -1
+                    )
+                    /*sendNotification("test","just working ${LanguageManager().getCurrentLangCode(applicationContext)}", -1)
                     sendNotification(applicationContext.getString(R.string.notification_upcoming), SharedDS().getList(applicationContext, "activities")[0] +
                             " at ${formatTimeStamps(SharedDS().getList(applicationContext, "timeStarts")[0], LanguageManager().getCurrentLangCode(applicationContext))}", 0)
-                    sendNotification(applicationContext.getString(R.string.notification_title),applicationContext.getString(R.string.notification_msg), -1)
+                    sendNotification(applicationContext.getString(R.string.notification_title),applicationContext.getString(R.string.notification_msg), -1)*/
 
                 }
             }
 
             else {
                 val scheduleActivityIndex = inputData.getInt("scheduleActivityIndex", -1)
-                sendNotification(applicationContext.getString(R.string.notification_upcoming), SharedDS().getList(applicationContext, "activities")[scheduleActivityIndex] +
-                        " at ${formatTimeStamps(SharedDS().getList(applicationContext, "timeStarts")[scheduleActivityIndex], LanguageManager().getCurrentLangCode(applicationContext))}", scheduleActivityIndex)
+
+                val activity = if(SharedDS().get(applicationContext,"Translation") == "1")
+                    SharedDS().getList(applicationContext, "activities")[scheduleActivityIndex]
+                else
+                    SharedDS().getList(applicationContext, "translated_activities")[scheduleActivityIndex]
+
+                sendNotification(applicationContext.getString(R.string.notification_upcoming_title),
+                    applicationContext.getString(R.string.notification_upcoming_msg, activity,
+                    formatTimeStamps(SharedDS().getList(
+                        applicationContext, "timeStarts")[scheduleActivityIndex],
+                        LanguageManager().getCurrentLangCode(applicationContext))
+                    ),
+                    scheduleActivityIndex
+                )
             }
 
         }
