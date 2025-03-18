@@ -5,6 +5,7 @@
     <string name="title_settings">Настройки</string>
     <string name="welcome">Получайте уведомления с помощью \nLMS &amp; LXP notifier</string>.
     <string name="warning">Это приложение не является разработкой UTMN\nПодробнее https://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>.
+    <string name="warning_translation">Спасибо MyMemory за помощь в переводе! Перевод может быть неточным, а также может временно перестать работать из-за ежедневного ограничения использования</string>
     <string name="inputRequired">*Обязательное поле</string>
     <string name="unacceptableChars">*Недопустимые символы</string>
     <string name="scheduleErrorMsg">
@@ -16,7 +17,7 @@
         https://github.com/Hlormar/UTMN-LMS-LXP-Notifier
     </string>
     <string name="schedule_accessTime">Время доступа: %1$s</string>
-    <string name="schedule_outdated">Старое</string>
+    <string name="schedule_outdated">устарело</string>
 
     <string name="key1">1</string>
     <string name="key2">2</string>

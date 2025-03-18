@@ -44,7 +44,7 @@ class MainActivity : ActivityBase() {
         navBar.setOnItemSelectedListener {
             when (it.itemId){
                 R.id.menu_lock -> {
-                    ScheduleViewModel.isParsed = false
+                    //ScheduleViewModel.isParsed = false
                     ScheduleViewModel.dataTemp.postValue(listOf())
                     SettingsFragmentViewModel.isFirstCreation.value = true
                     val intent = Intent(this, LockScreen::class.java)
@@ -54,12 +54,12 @@ class MainActivity : ActivityBase() {
                 R.id.menu_schedule -> {
                     makeCurrentFragment(ScheduleFragment())
                     //uncomment if want the schedule to reload on reselection
-                    /*ScheduleViewModel.isParsed = false
-                    ScheduleViewModel.dataTemp.postValue(listOf())*/
+                    //ScheduleViewModel.isParsed = false
+                    ScheduleViewModel.dataTemp.postValue(listOf())
                     SettingsFragmentViewModel.isFirstCreation.value = true
                     selectedFragment = 0}
                 R.id.menu_settings -> {
-                    ScheduleViewModel.isParsed = false
+                    //ScheduleViewModel.isParsed = false
                     ScheduleViewModel.dataTemp.postValue(listOf()) //resetting data, forcing loadingAnimation to appear
                     makeCurrentFragment(SettingsFragment())
                     selectedFragment = 1}

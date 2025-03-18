@@ -227,6 +227,7 @@ class SettingsFragment : Fragment() {
                         translationSwitcher.thumbTintList = requireContext().getColorStateList(R.color.utmn)
                         translationSwitcher.trackTintList = requireContext().getColorStateList(R.color.utmn_lighter)
                         SharedDS().writeStr(requireContext(), "Translation", "1")
+                        ScheduleViewModel.dataTemp.postValue(listOf()) // force the spinner to appear
                     }
                     else{
                         //set to false + clean cache

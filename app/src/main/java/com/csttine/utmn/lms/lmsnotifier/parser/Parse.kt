@@ -37,7 +37,7 @@ fun parseOffline (context: Context) :List<Any>{
     val areThereNewTasks = false
 
     if (accessTime != ""){
-        source = 1
+        source = 0
         activities = SharedDS().getList(context, "activities")
         activityTypes = SharedDS().getList(context, "activityTypes")
         timeStarts = SharedDS().getList(context, "timeStarts")
@@ -75,17 +75,16 @@ fun parse(context: Context) :List<Any> {
 
     return if (jsonDict.toString() != "-1") {
         source = 0
-        var activities: MutableList<String> = mutableListOf()
-        var activityTypes: MutableList<String> = mutableListOf()
-        var timeStarts: MutableList<String> = mutableListOf()
-        var timeDurations: MutableList<String> = mutableListOf()
-        var descriptions: MutableList<String> = mutableListOf()
-        var coursesNames: MutableList<String> = mutableListOf()
-        var urls: MutableList<String> = mutableListOf()
+        val activities: MutableList<String> = mutableListOf()
+        val activityTypes: MutableList<String> = mutableListOf()
+        val timeStarts: MutableList<String> = mutableListOf()
+        val timeDurations: MutableList<String> = mutableListOf()
+        val descriptions: MutableList<String> = mutableListOf()
+        val coursesNames: MutableList<String> = mutableListOf()
+        val urls: MutableList<String> = mutableListOf()
         var areThereNewTasks = false
-        var accessTime = ""
         val events = jsonDict.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
-        accessTime = jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp")).toString()
+        val accessTime = jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp")).toString()
 
         for (i in events) {
             activities.add(i.asMap()[PyObject.fromJava("activityname")].toString())
@@ -140,5 +139,10 @@ fun parse(context: Context) :List<Any> {
         listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
     }
     //Offline
-    else parseOffline(context)
+    else {
+        // return offline with outdated status
+        val data = (parseOffline(context)).toMutableList()
+        data[8] = (1).toByte()
+        data
+    }
 }

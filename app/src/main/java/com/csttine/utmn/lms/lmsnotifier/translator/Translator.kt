@@ -40,16 +40,24 @@ class Translator {
     }
 
 
-    private fun getCorrectEmail(context: Context, email: String): String{
+    /*private fun getCorrectEmail(context: Context, email: String): String{
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
             Log.d("     getCorrectEmail", "wrong email $email")
             val emailNew = if (email.take(4).lowercase() == "stud") "$email@study.utmn.ru" // assume user is student
             else "$email@utmn.ru"
-            Toast.makeText(context, context.getString(R.string.toast_incorrectEmail, email, emailNew), Toast.LENGTH_SHORT).show()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.toast_incorrectEmail, email, emailNew),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
             return emailNew
         }
-        else return email
-    }
+        else {
+            Log.d("     getCorrectEmail", "correct email $email")
+            return email}
+    }*/
 
     // used in case the separate sentence too long. May result in missing of meaning
     private fun portionByWords(text: String, maxBytes: Int): List<String> {
@@ -102,11 +110,9 @@ class Translator {
     }
 
 
-     suspend fun translateRuToEn(context: Context ,raw: String) : String{
+     suspend fun translateRuToEn(context: Context ,raw: String, email: String) : String{
         return withContext(Dispatchers.IO){
             try {
-                val email = getCorrectEmail(context, SharedDS().get(context, "email"))
-
                 //build an url
                 val url = HttpUrl.parse("https://api.mymemory.translated.net/get").newBuilder()
                     .addQueryParameter("q", raw)

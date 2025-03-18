@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.util.Log
 import android.util.DisplayMetrics
+import android.util.Patterns
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -36,6 +37,7 @@ import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
 import com.csttine.utmn.lms.lmsnotifier.parser.formatTimeStamps
 import com.csttine.utmn.lms.lmsnotifier.parser.parseOffline
 import com.csttine.utmn.lms.lmsnotifier.translator.Translator
+import kotlinx.coroutines.CoroutineScope
 import java.util.Locale
 
 
@@ -99,6 +101,7 @@ class ScheduleViewModel : ViewModel(){
     }
 
     //var isFirstCreation = true
+    var isTranslating = false
     val data : LiveData<List<Any>> = dataTemp
 
     fun asyncParse(context: Context){
@@ -106,107 +109,189 @@ class ScheduleViewModel : ViewModel(){
             try {
                 withContext(Dispatchers.IO){
                     //===================Parse=========================
-                    var mixedList: MutableList<Any> = if (isParsed) parseOffline(context).toMutableList()
+                    val mixedList: MutableList<Any> = if (isParsed) parseOffline(context).toMutableList()
                     else {
-                        isParsed = true
                         parse(context).toMutableList()
                     }
 
                     //===================Translate=========================
-                    val shouldTranslate = when(SharedDS().get(context, "Translation")){
-                        "1" -> true
-                        else -> false
-                    }
-                    val isTranslated = when (SharedDS().get(context, "isTranslated")){
-                        "1" -> true
-                        else -> false
-                    }
-
-                    if (shouldTranslate && (mixedList[8] as Byte) != (-1).toByte()){
-                        if (isTranslated){
-                            Log.d("     TRANSLATING", "TRANSLATED")
-                            mixedList[4] = SharedDS().getList(context, "translated_descriptions")
-                            mixedList[1] = SharedDS().getList(context, "translated_activities")
-                            mixedList[5] = SharedDS().getList(context, "translated_coursesNames")
-
+                    try {
+                        val shouldTranslate = when(SharedDS().get(context, "Translation")){
+                            "1" -> true
+                            else -> false
                         }
-                        else{
-                            Log.d("     TRANSLATING", "NOT TRANSLATED")
-                            withContext(Dispatchers.Main){
-                                Toast.makeText(context, context.getString(R.string.toast_translating), Toast.LENGTH_LONG).show()
+                        val isTranslated = when (SharedDS().get(context, "isTranslated")){
+                            "1" -> true
+                            else -> false
+                        }
+
+                        if (shouldTranslate && (mixedList[8] as Byte) != (-1).toByte()){
+                            if (isTranslated){
+                                Log.d("     TRANSLATING", "TRANSLATED")
+                                mixedList[4] = SharedDS().getList(context, "translated_descriptions")
+                                mixedList[1] = SharedDS().getList(context, "translated_activities")
+                                mixedList[5] = SharedDS().getList(context, "translated_coursesNames")
+
                             }
-                            val translator = Translator()
-                            val cyrillicLanguages = listOf("rus", "bel", "ukr", "bul", "srp", "mkd", "kaz",
-                                "tgk", "tat", "kir", "uzb", "bak", "che", "mon")
-                            // opennlp may detect lang not correctly
-                            val descriptions = mixedList[4] as List<String>
-                            val titles = mixedList[1] as List<String>
-                            val courses = mixedList[5] as List<String>
-                            val coursesTranslationMap: MutableMap<String, String> = mutableMapOf() // stores pairs of course : translation to speed up
-
-                            for (i in (titles).indices ){
-                                var descr = descriptions[i]
-                                val course = courses[i]
-                                var title = titles[i]
-                                var chunksActivitie: MutableList<String>
-                                var chunksCourse: MutableList<String>
-                                var chunksDescription: MutableList<String>
-
-                                // Activities
-                                if (translator.detectLanguage(title) in cyrillicLanguages){
-                                    chunksActivitie = translator.portionSentences(translator.splitRuTextIntoSentences(title)).toMutableList()
-                                    Log.d("     TRANSLATING TITLE", "Title chunks $chunksActivitie")
-                                    title = ""
-                                    for (chunk in chunksActivitie) {
-                                        title += translator.translateRuToEn(context, chunk)
-                                    }
-                                    Log.d("     TRANSLATING TITLE", "Translated title $title")
-                                    (mixedList[1] as MutableList<String>)[i] = title
-                                } else Log.d("      TRANSLATING TITLE", "lang of title $i is ${translator.detectLanguage(title)}")
-
-                                // Courses names
-                                if (coursesTranslationMap.containsKey(course)){
-                                  Log.d("TRANSLATING COURSE", "course $i already translated")
-                                    (mixedList[5] as MutableList<String>)[i] = coursesTranslationMap[course]!!
-                                } else {
-                                    if (translator.detectLanguage(course) in cyrillicLanguages){
-                                        chunksCourse = translator.portionSentences(listOf(course)).toMutableList()
-                                        Log.d("     TRANSLATING COURSE", "Course chunks $chunksCourse")
-                                        var courseNew = ""
-                                        for (chunk in chunksCourse) {
-                                            courseNew += translator.translateRuToEn(context, chunk)
-                                        }
-                                        Log.d("     TRANSLATING COURSE", "Translated course $courseNew")
-                                        coursesTranslationMap[course] = courseNew
-                                        (mixedList[5] as MutableList<String>)[i] = courseNew
-                                    } else Log.d("      TRANSLATING COURSE", "lang of course $i is ${translator.detectLanguage(course)}")
-
+                            else if (!isTranslating){
+                                Log.d("     TRANSLATING", "NOT TRANSLATED")
+                                withContext(Dispatchers.Main){
+                                    isTranslating = true
+                                    Toast.makeText(context, context.getString(R.string.toast_translating), Toast.LENGTH_LONG).show()
                                 }
-                                //Descriptions
-                                if (translator.detectLanguage(descr) in cyrillicLanguages){
-                                    chunksDescription = translator.portionSentences(translator.splitRuTextIntoSentences(descr)).toMutableList()
-                                    Log.d("     TRANSLATING DESCR", "Descr chunks $chunksDescription")
-                                    descr = ""
-                                    for (chunk in chunksDescription) {
-                                        descr += translator.translateRuToEn(context, chunk)
+
+                                //get correct email
+                                var email = SharedDS().get(context, "email")
+                                email = if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+                                    Log.d("     getCorrectEmail", "wrong email $email")
+                                    val emailNew = if (email.take(4).lowercase() == "stud") "$email@study.utmn.ru" // assume user is student
+                                    else "$email@utmn.ru"
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.toast_incorrectEmail, email, emailNew),
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                     }
-                                    Log.d("     TRANSLATING DESCR", "Translated descr $descr")
-                                    (mixedList[4] as MutableList<String>)[i] = descr
-                                } else Log.d("      TRANSLATING DESCR", "lang of descr $i is ${translator.detectLanguage(descr)}")
-                            }
-                            SharedDS().writeStr(context, "isTranslated", "1")
-                            Log.d("TRANSLATING", "FINISH ${SharedDS().get(context, "isTranslated")}")
-                            SharedDS().writeList(context, "translated_activities", mixedList[1] as MutableList<String>)
-                            SharedDS().writeList(context, "translated_descriptions", mixedList[4] as MutableList<String>)
-                            SharedDS().writeList(context, "translated_coursesNames", mixedList[5] as MutableList<String>)
-                            //write translations to ds
+                                    emailNew
+                                }
+                                else {
+                                    Log.d("     getCorrectEmail", "correct email $email")
+                                    email
+                                }
+
+                                val translator = Translator()
+                                val cyrillicLanguages = listOf("rus", "bel", "ukr", "bul", "srp", "mkd", "kaz",
+                                    "tgk", "tat", "kir", "uzb", "bak", "che", "mon")
+                                // opennlp may detect lang not correctly
+                                val descriptions = mixedList[4] as List<String>
+                                val titles = mixedList[1] as List<String>
+                                val courses = mixedList[5] as List<String>
+                                val coursesTranslationMap: MutableMap<String, String> = mutableMapOf() // stores pairs of course : translation to speed up
+
+                                // Parallelize translation tasks
+                                val translationScope = CoroutineScope(Dispatchers.IO)
+
+                                // Translate Titles
+                                val titleJob = translationScope.launch {
+                                    val translatedTitles = titles.mapIndexed { _, title ->
+                                        if (translator.detectLanguage(title) in cyrillicLanguages) {
+                                            translator.translateRuToEn(context, title, email)
+                                        } else {
+                                            title
+                                        }
+                                    }
+                                    (mixedList[1] as MutableList<String>).clear()
+                                    (mixedList[1] as MutableList<String>).addAll(translatedTitles)
+                                }
+
+                                // Translate Courses Names
+                                val courseJob = translationScope.launch {
+                                    val translatedCourses = courses.mapIndexed { _, course ->
+                                        if (coursesTranslationMap.containsKey(course)) {
+                                            coursesTranslationMap[course]
+                                        } else {
+                                            if (translator.detectLanguage(course) in cyrillicLanguages) {
+                                                val translatedCourse = translator.translateRuToEn(context, course, email)
+                                                coursesTranslationMap[course] = translatedCourse
+                                                translatedCourse
+                                            } else {
+                                                course
+                                            }
+                                        }
+                                    }
+                                    (mixedList[5] as MutableList<String>).clear()
+                                    (mixedList[5] as MutableList<String>).addAll(translatedCourses as List<String>)
+                                }
+
+                                // Translate Descriptions
+                                val descriptionJob = translationScope.launch {
+                                    val translatedDescriptions = descriptions.mapIndexed { _, descr ->
+                                        if (translator.detectLanguage(descr) in cyrillicLanguages) {
+                                            translator.translateRuToEn(context, descr, email)
+                                        } else {
+                                            descr
+                                        }
+                                    }
+                                    (mixedList[4] as MutableList<String>).clear()
+                                    (mixedList[4] as MutableList<String>).addAll(translatedDescriptions)
+                                }
+
+                                // Wait for all jobs to complete
+                                listOf(titleJob, courseJob, descriptionJob).forEach { job ->
+                                    job.join()
+                                }
+
+                                /*
+                                //not optimized approach
+                                for (i in (titles).indices ){
+                                    var descr = descriptions[i]
+                                    val course = courses[i]
+                                    var title = titles[i]
+                                    var chunksActivitie: MutableList<String>
+                                    var chunksCourse: MutableList<String>
+                                    var chunksDescription: MutableList<String>
+
+                                    // Activities
+                                    if (translator.detectLanguage(title) in cyrillicLanguages){
+                                        chunksActivitie = translator.portionSentences(translator.splitRuTextIntoSentences(title)).toMutableList()
+                                        Log.d("     TRANSLATING TITLE", "Title chunks $chunksActivitie")
+                                        title = ""
+                                        for (chunk in chunksActivitie) {
+                                            title += translator.translateRuToEn(context, chunk, email)
+                                        }
+                                        Log.d("     TRANSLATING TITLE", "Translated title $title")
+                                        (mixedList[1] as MutableList<String>)[i] = title
+                                    } else Log.d("      TRANSLATING TITLE", "lang of title $i is ${translator.detectLanguage(title)}")
+
+                                    // Courses names
+                                    if (coursesTranslationMap.containsKey(course)){
+                                        Log.d("TRANSLATING COURSE", "course $i already translated")
+                                        (mixedList[5] as MutableList<String>)[i] = coursesTranslationMap[course]!!
+                                    } else {
+                                        if (translator.detectLanguage(course) in cyrillicLanguages){
+                                            chunksCourse = translator.portionSentences(listOf(course)).toMutableList()
+                                            Log.d("     TRANSLATING COURSE", "Course chunks $chunksCourse")
+                                            var courseNew = ""
+                                            for (chunk in chunksCourse) {
+                                                courseNew += translator.translateRuToEn(context, chunk, email)
+                                            }
+                                            Log.d("     TRANSLATING COURSE", "Translated course $courseNew")
+                                            coursesTranslationMap[course] = courseNew
+                                            (mixedList[5] as MutableList<String>)[i] = courseNew
+                                        } else Log.d("      TRANSLATING COURSE", "lang of course $i is ${translator.detectLanguage(course)}")
+
+                                    }
+                                    //Descriptions
+                                    if (translator.detectLanguage(descr) in cyrillicLanguages){
+                                        chunksDescription = translator.portionSentences(translator.splitRuTextIntoSentences(descr)).toMutableList()
+                                        Log.d("     TRANSLATING DESCR", "Descr chunks $chunksDescription")
+                                        descr = ""
+                                        for (chunk in chunksDescription) {
+                                            descr += translator.translateRuToEn(context, chunk, email)
+                                        }
+                                        Log.d("     TRANSLATING DESCR", "Translated descr $descr")
+                                        (mixedList[4] as MutableList<String>)[i] = descr
+                                    } else Log.d("      TRANSLATING DESCR", "lang of descr $i is ${translator.detectLanguage(descr)}")
+                                }*/
+                                SharedDS().writeStr(context, "isTranslated", "1")
+                                Log.d("TRANSLATING", "FINISH ${SharedDS().get(context, "isTranslated")}")
+                                SharedDS().writeList(context, "translated_activities", mixedList[1] as MutableList<String>)
+                                SharedDS().writeList(context, "translated_descriptions", mixedList[4] as MutableList<String>)
+                                SharedDS().writeList(context, "translated_coursesNames", mixedList[5] as MutableList<String>)
+                                isTranslating = false
+                            } else Log.d("      TRANSLATING", "NOT STARTING, BECAUSE ALREADY TRANSLATING")
                         }
+                    } catch (e: Exception){
+                        Log.e("     asyncParse()", "translation error ${e.message}", e)
                     }
 
+                    isParsed = true
                     dataTemp.postValue(mixedList)
                 }
             } catch (e: Exception){
                 Log.e("     asyncParse()", "${e.message}", e)
+                //TODO: post mixedList w error status if parsing was interrupted
             }
         }
     }
@@ -290,7 +375,7 @@ class ScheduleFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
         viewModel.data.observe(viewLifecycleOwner) { data ->
-            if (data.isNotEmpty()){
+            if (data.isNotEmpty() and !viewModel.isTranslating){
                 val infoText = view.findViewById<TextView>(R.id.infoText)
                 view.findViewById<ProgressBar>(R.id.loadingAnim).isVisible = false
 

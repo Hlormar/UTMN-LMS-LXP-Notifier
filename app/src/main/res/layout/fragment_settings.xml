@@ -123,13 +123,18 @@
                 android:inputType="none"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!--on enable: thumb utmn, track utmn_lighter-->
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/translationSwitcher"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="@string/settings_translationFeature"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/warning_translation"
+            style="@android:style/TextAppearance.Material.Caption" />
 
         <View
             android:layout_width="match_parent"
