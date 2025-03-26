@@ -99,9 +99,15 @@ fun parse(context: Context) :List<Any> {
                 )
             ).toString()) }
 
+        val knownActivities = SharedDS().getList(context, "activities")
+        val knownTimestarts = SharedDS().getList(context, "timeStarts")
+
         //re-enqueue if there are new tasks
-        if (!SharedDS().getList(context, "activities").containsAll(activities)) {
-            SharedDS().writeStr(context, "isTranslated", "")
+        //we check if there are new activities or if there are new deadlines, which i guess handles cases when the new ass has old name
+        //cause they are unlike to has the same timestart obviously
+        if (!knownActivities.containsAll(activities) or !knownTimestarts.containsAll(timeStarts)) {
+            //TODO: optimise by translating only new descr, titles and courses (requires storing maps<origin:translation>)
+            SharedDS().clearStr(context, "isTranslated")
             areThereNewTasks = true
             for (i in activities.indices) {
                 var delaySex = timeStarts[i].toLong() - (System.currentTimeMillis() / 1000)
@@ -114,16 +120,41 @@ fun parse(context: Context) :List<Any> {
                     }
 
                     val workRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
+                        .addTag("lms-deadline")
                         .setInitialDelay(delaySex, TimeUnit.SECONDS)
-                        .setInputData(Data.Builder()
-                            .putBoolean("isPeriodic", false)
-                            .putInt("scheduleActivityIndex", i)
-                            .build())
+                        .setInputData(
+                            Data.Builder()
+                                .putBoolean("isPeriodic", false)
+                                .putInt("scheduleActivityIndex", i)
+                                .build()
+                        )
                         .build()
-                    WorkManager.getInstance(context).enqueue(workRequest)
+                    val WM = WorkManager.getInstance(context)
+                    WM.cancelAllWorkByTag("lms-deadline")
+                    WM.enqueue(workRequest)
 
                 }
             }
+        } else if(!activities.containsAll(knownActivities) or !timeStarts.containsAll(knownTimestarts)) {
+            // when some tasks passed away
+            val amountAssignsPassed = knownActivities.lastIndex - activities.lastIndex
+            Log.d("     Parser", "amount of asses has reduced by $amountAssignsPassed")
+            Log.d("     Parser", "$activities\n$knownActivities")
+
+            if (SharedDS().get(context, "isTranslated") == "1"){
+                val translatedDescr = SharedDS().getList(context, "translated_descriptions")
+                val translatedActs = SharedDS().getList(context, "translated_activities")
+                val translatedCourses = SharedDS().getList(context, "translated_coursesNames")
+                //Log.d("     Parser", "trans acts before transformation $translatedActs")
+
+                val currentLastIndex = translatedActs.lastIndex
+                SharedDS().writeList(context, "translated_activities", translatedActs.slice(0 + amountAssignsPassed..currentLastIndex) as MutableList<String>)
+                SharedDS().writeList(context, "translated_descriptions", translatedDescr.slice(0 + amountAssignsPassed..currentLastIndex) as MutableList<String>)
+                SharedDS().writeList(context, "translated_coursesNames", translatedCourses.slice(0 + amountAssignsPassed..currentLastIndex) as MutableList<String>)
+
+                //Log.d("     Parser", "trans acts after transformation ${SharedDS().getList(context,"translated_activities")}")
+            }
+
         }
 
 
