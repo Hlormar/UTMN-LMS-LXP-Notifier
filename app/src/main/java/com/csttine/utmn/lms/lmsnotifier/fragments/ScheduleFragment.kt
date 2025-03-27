@@ -98,21 +98,25 @@ class ScheduleViewModel : ViewModel(){
     companion object {
         var isParsed = false
         val dataTemp = MutableLiveData<List<Any>>()
+        var isFallback = false
     }
 
     //var isFirstCreation = true
     var isTranslating = false
     val data : LiveData<List<Any>> = dataTemp
+    var selectedNote = -1
 
     fun asyncParse(context: Context){
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO){
                     //===================Parse=========================
-                    val mixedList: MutableList<Any> = if (isParsed) parseOffline(context).toMutableList()
-                    else {
-                        parse(context).toMutableList()
+                    lateinit var mixedList: MutableList<Any>
+                    if (isParsed){
+                        mixedList = parseOffline(context).toMutableList()
+                        if (!isFallback) mixedList[8] = (0).toByte() // setting source to online if it hasn't fallen back to offline during parse
                     }
+                    else mixedList = parse(context).toMutableList()
 
                     //===================Translate=========================
                     try {
@@ -125,7 +129,7 @@ class ScheduleViewModel : ViewModel(){
                             else -> false
                         }
 
-                        if (shouldTranslate && (mixedList[8] as Byte) != (-1).toByte()){
+                        if (shouldTranslate && mixedList[8] != (-1).toByte()){
                             if (isTranslated){
                                 Log.d("     TRANSLATING", "TRANSLATED")
                                 mixedList[4] = SharedDS().getList(context, "translated_descriptions")
@@ -222,58 +226,6 @@ class ScheduleViewModel : ViewModel(){
                                     job.join()
                                 }
 
-                                /*
-                                //not optimized approach
-                                for (i in (titles).indices ){
-                                    var descr = descriptions[i]
-                                    val course = courses[i]
-                                    var title = titles[i]
-                                    var chunksActivitie: MutableList<String>
-                                    var chunksCourse: MutableList<String>
-                                    var chunksDescription: MutableList<String>
-
-                                    // Activities
-                                    if (translator.detectLanguage(title) in cyrillicLanguages){
-                                        chunksActivitie = translator.portionSentences(translator.splitRuTextIntoSentences(title)).toMutableList()
-                                        Log.d("     TRANSLATING TITLE", "Title chunks $chunksActivitie")
-                                        title = ""
-                                        for (chunk in chunksActivitie) {
-                                            title += translator.translateRuToEn(context, chunk, email)
-                                        }
-                                        Log.d("     TRANSLATING TITLE", "Translated title $title")
-                                        (mixedList[1] as MutableList<String>)[i] = title
-                                    } else Log.d("      TRANSLATING TITLE", "lang of title $i is ${translator.detectLanguage(title)}")
-
-                                    // Courses names
-                                    if (coursesTranslationMap.containsKey(course)){
-                                        Log.d("TRANSLATING COURSE", "course $i already translated")
-                                        (mixedList[5] as MutableList<String>)[i] = coursesTranslationMap[course]!!
-                                    } else {
-                                        if (translator.detectLanguage(course) in cyrillicLanguages){
-                                            chunksCourse = translator.portionSentences(listOf(course)).toMutableList()
-                                            Log.d("     TRANSLATING COURSE", "Course chunks $chunksCourse")
-                                            var courseNew = ""
-                                            for (chunk in chunksCourse) {
-                                                courseNew += translator.translateRuToEn(context, chunk, email)
-                                            }
-                                            Log.d("     TRANSLATING COURSE", "Translated course $courseNew")
-                                            coursesTranslationMap[course] = courseNew
-                                            (mixedList[5] as MutableList<String>)[i] = courseNew
-                                        } else Log.d("      TRANSLATING COURSE", "lang of course $i is ${translator.detectLanguage(course)}")
-
-                                    }
-                                    //Descriptions
-                                    if (translator.detectLanguage(descr) in cyrillicLanguages){
-                                        chunksDescription = translator.portionSentences(translator.splitRuTextIntoSentences(descr)).toMutableList()
-                                        Log.d("     TRANSLATING DESCR", "Descr chunks $chunksDescription")
-                                        descr = ""
-                                        for (chunk in chunksDescription) {
-                                            descr += translator.translateRuToEn(context, chunk, email)
-                                        }
-                                        Log.d("     TRANSLATING DESCR", "Translated descr $descr")
-                                        (mixedList[4] as MutableList<String>)[i] = descr
-                                    } else Log.d("      TRANSLATING DESCR", "lang of descr $i is ${translator.detectLanguage(descr)}")
-                                }*/
                                 SharedDS().writeStr(context, "isTranslated", "1")
                                 Log.d("TRANSLATING", "FINISH ${SharedDS().get(context, "isTranslated")}")
                                 SharedDS().writeList(context, "translated_activities", mixedList[1] as MutableList<String>)
@@ -287,6 +239,7 @@ class ScheduleViewModel : ViewModel(){
                     }
 
                     isParsed = true
+                    Log.d("     Parse", "${mixedList[1] as List<String>}")
                     dataTemp.postValue(mixedList)
                 }
             } catch (e: Exception){
@@ -300,7 +253,6 @@ class ScheduleViewModel : ViewModel(){
 
 class ScheduleFragment : Fragment() {
 
-    private var selectedNote :Int = -1
     private lateinit var viewModel : ScheduleViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CardViewAdapter
@@ -371,6 +323,8 @@ class ScheduleFragment : Fragment() {
         return view }
 
 
+    //TODO : POPUP ON CLOSE selectedPopup = -1
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
@@ -382,20 +336,25 @@ class ScheduleFragment : Fragment() {
                 val locale = LanguageManager().getCurrentLangCode(requireContext())
 
                 //setting info message
-                if (data[8] as Byte == (-1).toByte()) {
+                if (data[8] == (-1).toByte()) {
                     infoText.textAlignment = View.TEXT_ALIGNMENT_CENTER
                     infoText.text = getString(R.string.scheduleErrorMsg)
                 }
                 else{
-                    infoText.text = if (data[8] == 0.toByte()) getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, locale))
-                    else getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, locale)) + " (" + getString(R.string.schedule_outdated) + ")"
+                    if (data[8] == 0.toByte())
+                        infoText.text = getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, locale))
+                    else {
+                        infoText.text = getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, locale)) + " (" + getString(R.string.schedule_outdated) + ")"
+                        ScheduleViewModel.isFallback = true
+
+                    }
 
 
                     //restore opened note
-                    selectedNote = savedInstanceState?.getInt("selectedNote") ?: -1
-                    Log.d("     restoring", selectedNote.toString())
-                    if (selectedNote != -1){
-                        popupNote(selectedNote, data, locale)
+                    Log.d("     restoring", viewModel.selectedNote.toString())
+                    if (viewModel.selectedNote != -1){
+                        //popupNote(viewModel.selectedNote, data, locale)
+
                     }
 
                     recyclerView = view.findViewById(R.id.recyclerView)
@@ -424,8 +383,8 @@ class ScheduleFragment : Fragment() {
                     adapter = CardViewAdapter(titlesList, data[5] as List<String>, data[3] as List<String>, locale, object : CardViewAdapter.OnItemClickListener {
                         override fun onItemClick(position: Int) {
                             popupNote(position, data, locale)
-                            selectedNote = position
-                            Log.d("     pop-up", selectedNote.toString())
+                            viewModel.selectedNote = position
+                            Log.d("     pop-up", viewModel.selectedNote.toString())
 
                         }
                     })
@@ -435,13 +394,5 @@ class ScheduleFragment : Fragment() {
         }
 
         viewModel.asyncParse(requireContext())
-    }
-
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        Log.d("     saving", selectedNote.toString())
-        // not saving + shows on top
-        outState.putInt("selectedNote", selectedNote)
     }
 }

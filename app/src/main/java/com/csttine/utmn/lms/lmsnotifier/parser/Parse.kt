@@ -37,7 +37,7 @@ fun parseOffline (context: Context) :List<Any>{
     val areThereNewTasks = false
 
     if (accessTime != ""){
-        source = 0
+        source = 1
         activities = SharedDS().getList(context, "activities")
         activityTypes = SharedDS().getList(context, "activityTypes")
         timeStarts = SharedDS().getList(context, "timeStarts")
@@ -173,7 +173,6 @@ fun parse(context: Context) :List<Any> {
     else {
         // return offline with outdated status
         val data = (parseOffline(context)).toMutableList()
-        data[8] = (1).toByte()
         data
     }
 }
