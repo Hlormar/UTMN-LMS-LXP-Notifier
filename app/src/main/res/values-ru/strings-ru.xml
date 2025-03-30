@@ -4,7 +4,7 @@
     <string name="title_schedule">Расписание</string>
     <string name="title_settings">Настройки</string>
     <string name="welcome">Получайте уведомления с помощью \nLMS &amp; LXP notifier</string>.
-    <string name="warning">Это приложение не является разработкой UTMN\nПодробнее https://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>.
+    <string name="warning">Это приложение не является разработкой ТюмГУ\nhttps://github.com/Hlormar/UTMN-LMS-LXP-Notifier</string>.
     <string name="warning_translation">Спасибо MyMemory за помощь в переводе! Перевод может быть неточным, а также может временно перестать работать из-за ежедневного ограничения использования</string>
     <string name="inputRequired">*Обязательное поле</string>
     <string name="unacceptableChars">*Недопустимые символы</string>
@@ -34,6 +34,8 @@
     <string name="settings_notification">Уведомления</string>
     <string name="settings_language">Язык</string>
     <string name="settings_translationFeature">Перевод описания с русского на английский</string>
+    <string name="settings_timeBeforeDeadline_start">1</string>
+    <string name="settings_timeBeforeDeadline_end">24</string>
 
     <string name="lang_current">Русский</string>
     <string name="lang_eng">Английский</string>
@@ -43,6 +45,8 @@
     <string name="hint_password">Пароль</string>
     <string name="hint_passcode">Код доступа</string>
     <string name="hint_lang">Язык интерфейса</string>
+    <string name="hint_autochecks">Количество ежедневных проверок</string>
+    <string name="hint_timeBeforeDeadline">Количество часов между уведомлением и дедлайном</string>
 
     <string name="contentDesc_logo">Логотип ТюмГУ</string>
     <string name="contentDesc_backspace">стереть</string>

@@ -36,7 +36,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/emailLayout"
             style="@style/InputLayout"
-            android:layout_width="332dp"
+            android:layout_width="360dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:hint="@string/hint_email"
@@ -56,7 +56,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/passwordLayout"
-            android:layout_width="332dp"
+            android:layout_width="360dp"
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toTopOf="@id/guideline50"
             app:layout_constraintStart_toStartOf="parent"

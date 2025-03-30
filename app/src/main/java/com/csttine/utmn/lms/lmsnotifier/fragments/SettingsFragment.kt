@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,16 +18,21 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.work.WorkManager
+import com.csttine.utmn.lms.lmsnotifier.LmsApp
 import com.csttine.utmn.lms.lmsnotifier.R
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragmentViewModel.Companion.isFirstCreation
 import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
+import com.csttine.utmn.lms.lmsnotifier.parser.enqueueDeadlines
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import opennlp.tools.parser.Parser
 
 class SettingsFragmentViewModel : ViewModel(){
     companion object {
@@ -44,6 +50,9 @@ class SettingsFragmentViewModel : ViewModel(){
     var emailFieldError : CharSequence? = null
     var passwordFieldError : CharSequence? = null
     var passcodeFieldError : CharSequence? = null
+    var autoChecksAmount = ""
+    var hoursBeforeAlert = 5
+    var isHourModified = false
 }
 
 
@@ -66,6 +75,8 @@ class SettingsFragment : Fragment() {
         val passcodeField = view.findViewById<TextInputLayout>(R.id.passcodeLayout)
         val translationSwitcher = view.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.translationSwitcher)
         val languageList = view.findViewById<AutoCompleteTextView>(R.id.language_autocomplete)
+        val autoCheckList = view.findViewById<AutoCompleteTextView>(R.id.amount_autocomplete)
+        val hourSlider = view.findViewById<Slider>(R.id.hourSlider)
 
         viewModel = ViewModelProvider(requireActivity())[SettingsFragmentViewModel::class.java]
 
@@ -79,6 +90,8 @@ class SettingsFragment : Fragment() {
                 "1" -> viewModel.isTranslationEnabled = true
                 else -> viewModel.isTranslationEnabled = false
             }
+            viewModel.autoChecksAmount = SharedDS().get(requireContext(), "autoChecksAmount").ifBlank { "3" }
+            viewModel.hoursBeforeAlert = SharedDS().get(requireContext(), "hoursBeforeDeadline").toIntOrNull() ?: 5
         }
 
         emailEdit.setText(viewModel.email)
@@ -90,6 +103,8 @@ class SettingsFragment : Fragment() {
         passwordField.error = viewModel.passwordFieldError
         passcodeField.error = viewModel.passcodeFieldError
         translationSwitcher.isChecked = viewModel.isTranslationEnabled
+        autoCheckList.setText(viewModel.autoChecksAmount, false)
+        hourSlider.value = viewModel.hoursBeforeAlert.toFloat()
 
         //disclaimer padding
         var isListenerTriggered = false
@@ -107,10 +122,13 @@ class SettingsFragment : Fragment() {
             navBar.viewTreeObserver.removeOnGlobalLayoutListener{}
         }
 
-        //attach language list to menu
-        val items = listOf(getString(R.string.lang_eng), getString(R.string.lang_rus))
-        val adapter = ArrayAdapter(requireContext(), R.layout.language_list, items)
-        languageList.setAdapter(adapter)
+        //attach lists to menus
+        val langs = listOf(getString(R.string.lang_eng), getString(R.string.lang_rus))
+        val amounts = listOf("1", "2", "3")
+        val langAdapter = ArrayAdapter(requireContext(), R.layout.autocomplete_list, langs)
+        val amountAdapter = ArrayAdapter(requireContext(), R.layout.autocomplete_list, amounts)
+        languageList.setAdapter(langAdapter)
+        autoCheckList.setAdapter(amountAdapter)
 
         //translation switcher colors
         if (viewModel.isTranslationEnabled) {
@@ -243,6 +261,24 @@ class SettingsFragment : Fragment() {
                     viewModel.isTranslationEnabled = isChecked
                 }
 
+                autoCheckList.setOnItemClickListener { parent, _, position, _ ->
+                    val selectedItem = parent.getItemAtPosition(position) as String
+                    if (selectedItem != viewModel.autoChecksAmount) {
+                        Log.d("     SettingsFragment", "amount of auto checks $selectedItem")
+                        SharedDS().writeStr(requireContext(), "autoChecksAmount", selectedItem)
+                        viewModel.autoChecksAmount = selectedItem
+                        WorkManager.getInstance(requireContext()).cancelAllWorkByTag("lms-autoCheck")
+                        LmsApp().scheduleAutoChecks()
+                    }
+                }
+
+                hourSlider.addOnChangeListener { slider, value, fromUser ->
+                    // Responds to when slider's value is changed
+                    Log.d("     SettingsFragment", "hours changed $value")
+                    viewModel.isHourModified = true
+                    viewModel.hoursBeforeAlert = value.toInt()
+                }
+
             }
         }
 
@@ -262,6 +298,11 @@ class SettingsFragment : Fragment() {
         }
         if (viewModel.passcode.length == 4 && viewModel.passcode.matches(Regex("\\d+"))){
             SharedDS().writeStr(requireContext(),"passcode", viewModel.passcode)
+        }
+        if (viewModel.isHourModified){
+            Log.d("     SettingsFragment", "recalc deadlines alerts")
+            SharedDS().writeStr(requireContext(), "hoursBeforeDeadline", viewModel.hoursBeforeAlert.toString())
+            enqueueDeadlines(requireContext(), SharedDS().getList(requireContext(),"timeStarts"), viewModel.hoursBeforeAlert)
         }
     }
 }
