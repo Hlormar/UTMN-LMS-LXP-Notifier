@@ -2,14 +2,7 @@ package com.csttine.utmn.lms.lmsnotifier.translator
 
 
 import android.content.Context
-import opennlp.tools.langdetect.LanguageDetectorME
-import opennlp.tools.langdetect.LanguageDetectorModel
 import android.util.Log
-import android.util.Patterns
-import android.widget.Toast
-import androidx.core.content.ContextCompat.getString
-import com.csttine.utmn.lms.lmsnotifier.R
-import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.squareup.okhttp.HttpUrl
 import com.squareup.okhttp.OkHttpClient
 import com.squareup.okhttp.Request
@@ -19,6 +12,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import opennlp.tools.langdetect.LanguageDetectorME
+import opennlp.tools.langdetect.LanguageDetectorModel
 import opennlp.tools.sentdetect.SentenceDetectorME
 import opennlp.tools.sentdetect.SentenceModel
 

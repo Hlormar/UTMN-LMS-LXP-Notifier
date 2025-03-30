@@ -211,8 +211,14 @@ class ScheduleViewModel : ViewModel(){
                                 // Translate Descriptions
                                 val descriptionJob = translationScope.launch {
                                     val translatedDescriptions = descriptions.mapIndexed { _, descr ->
+                                        Log.d("     ScheduleFragment", "translating descr $descr")
                                         if (translator.detectLanguage(descr) in cyrillicLanguages) {
-                                            translator.translateRuToEn(context, descr, email)
+                                            var newDescr = ""
+                                            for (i in Translator().splitRuTextIntoSentences(descr)){
+                                                Log.d("     ScheduleFragment", "translating part $i")
+                                                newDescr += translator.translateRuToEn(context, i, email)
+                                            }
+                                            newDescr
                                         } else {
                                             descr
                                         }
