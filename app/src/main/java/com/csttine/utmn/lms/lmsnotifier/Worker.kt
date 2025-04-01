@@ -5,13 +5,18 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
 import com.csttine.utmn.lms.lmsnotifier.parser.formatTimeStamps
 import com.csttine.utmn.lms.lmsnotifier.parser.parse
+import java.util.concurrent.TimeUnit
 
 class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
 
@@ -56,57 +61,63 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
     }
 
     override fun doWork(): Result {
-        val isPeriodic = inputData.getBoolean("isPeriodic", true)
+        //val isAutoCheck = inputData.getBoolean("isAutoCheck", true)
+        val tag = tags
         val sharedDS = SharedDS()
         val languageManager = LanguageManager()
         val currentLang = languageManager.getCurrentLangCode(applicationContext)
         val localizedContext = languageManager.updateLanguage(applicationContext, currentLang)
 
-        if (sharedDS.get(applicationContext, "passcode") != ""){
-            if (isPeriodic){
-                //check if there are new assignments
-                if (parse(applicationContext)[9] as Boolean){
-                    //notify
-                    sendNotification(localizedContext.getString(R.string.notification_incoming_title),localizedContext.getString(R.string.notification_incoming_msg), -1)
-                }
-                /*else{
-                    //do nothing or test
-                    val activity = if(sharedDS.get(applicationContext,"isTranslated") == "1")
-                        sharedDS.getList(applicationContext, "translated_activities")[2]
-                    else
-                        sharedDS.getList(applicationContext, "activities")[2]
+        Log.d("     Worker", "tags $tag")
+        if (tag.contains("lms-autoCheck")){
+            Log.d("     Worker", "handling auto check work")
+            val autoChecksAmount = inputData.getInt("autoChecksAmount", defaultValue = 1)
 
-
-                    sendNotification(localizedContext.getString(R.string.notification_upcoming_title),
-                        localizedContext.getString(R.string.notification_upcoming_msg, activity,
-                            formatTimeStamps(sharedDS.getList(
-                                applicationContext, "timeStarts")[0],
-                                currentLang)
-                        ),
-                        -1
-                    )
-                }*/
+            //check if there are new assignments
+            if (parse(applicationContext)[9] as Boolean)
+                sendNotification(localizedContext.getString(R.string.notification_incoming_title),localizedContext.getString(R.string.notification_incoming_msg), -1)
+            else{
+                //do nothing or test
+                sendNotification("test", "amount is $autoChecksAmount", -1)
             }
+        }
 
-            else {
-                val scheduleActivityIndex = inputData.getInt("scheduleActivityIndex", -1)
+        else if (tag.contains("lms-deadline")) {
+            Log.d("     Worker", "handling deadline work")
+            val scheduleActivityIndex = inputData.getInt("scheduleActivityIndex", -1)
 
-                val activity = if(sharedDS.get(applicationContext,"isTranslated") == "1")
-                    sharedDS.getList(applicationContext, "translated_activities")[scheduleActivityIndex]
-                else
-                    sharedDS.getList(applicationContext, "activities")[scheduleActivityIndex]
+            val activity = if(sharedDS.get(applicationContext,"isTranslated") == "1")
+                sharedDS.getList(applicationContext, "translated_activities")[scheduleActivityIndex]
+            else
+                sharedDS.getList(applicationContext, "activities")[scheduleActivityIndex]
 
-                sendNotification(localizedContext.getString(R.string.notification_upcoming_title),
-                    localizedContext.getString(R.string.notification_upcoming_msg, activity,
+            sendNotification(localizedContext.getString(R.string.notification_upcoming_title),
+                localizedContext.getString(R.string.notification_upcoming_msg, activity,
                     formatTimeStamps(sharedDS.getList(
                         applicationContext, "timeStarts")[scheduleActivityIndex],
                         LanguageManager().getCurrentLangCode(applicationContext))
-                    ),
-                    scheduleActivityIndex
-                )
-            }
-
+                ),
+                scheduleActivityIndex
+            )
         }
+
+        //schedule auto check 24 period work
+        else if (tag.contains("lms-autoCheckScheduler")){
+            Log.d("     Worker", "handling scheduler work")
+            LmsApp().scheduleAutoChecks()
+        }
+
+        //onetime work that init scheduleAutoCheck periodic work (started once after passing welcome screen)
+        else if (tag.contains("lms-initScheduler")){
+            Log.d("     Worker", "handling initializer work")
+            val workRequest = PeriodicWorkRequestBuilder<WorkRuntime>(24, TimeUnit.HOURS)
+                .addTag("lms-autoCheckScheduler")
+                .build()
+            WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork("lms-autoCheckScheduler", ExistingPeriodicWorkPolicy.UPDATE, workRequest)
+            Log.d("       Worker", "successfully initialized scheduler work: ${WorkManager.getInstance(applicationContext).getWorkInfosByTag("lms-autoCheckScheduler")}")
+        }
+
+
         return Result.success()
     }
 }

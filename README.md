@@ -22,11 +22,10 @@ git clone --recurse-submodules https://github.com/Hlormar/UTMN-LMS-LXP-Notifier.
 - [x] Provide android 9.0 support
 - [x] Add notification for new tasks appearing in calendar
 - [x] Add notification about upcoming deadline (timestart)
-- [ ] Add customizable amount of auto-checks per day (min is disabled, max is 24, default is 3)
+- [x] Add customizable amount of auto-checks per day
 - [x] RU/EN + full RU->EN descriptions translation
-- [ ] Make automated checking starts at time defined by user (default is 6am)
-- [ ] Make upcoming deadline notification timing customizable (default is 5 hours)
-- [ ] Limit the amount of reloads per 15 minutes, to reduce the server load
+- [x] Make upcoming deadline notification timing customizable (default is 5 hours)
+- [x] Limit the amount of reloads to reduce the server load
 - [ ] Add notification if the activity time changed
 - [ ] Switch from python parser to okhttp
 - [ ] Replace multiple cast of classes and generally improve quality of code

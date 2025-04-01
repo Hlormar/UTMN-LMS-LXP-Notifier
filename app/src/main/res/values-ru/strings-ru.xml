@@ -30,6 +30,8 @@
     <string name="key9">9</string>
     <string name="key0">0</string>
 
+    <string name="button_close">Закрыть</string>
+
     <string name="settings_account">Аккаунт</string>
     <string name="settings_notification">Уведомления</string>
     <string name="settings_language">Язык</string>

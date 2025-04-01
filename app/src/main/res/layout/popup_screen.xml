@@ -6,16 +6,6 @@
     android:layout_height="match_parent"
     style="@style/PopupLayout">
 
-    <ImageButton
-        android:id="@+id/close"
-        android:contentDescription="@string/contentDesc_closePopup"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:src="@drawable/ic_close"
-        android:backgroundTint="@android:color/transparent"
-        android:layout_gravity="end">
-    </ImageButton>
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

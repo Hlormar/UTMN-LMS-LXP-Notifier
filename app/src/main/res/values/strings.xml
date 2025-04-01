@@ -29,6 +29,8 @@
     <string name="key9">9</string>
     <string name="key0">0</string>
 
+    <string name="button_close">Close</string>
+
     <string name="settings_account">Account</string>
     <string name="settings_notification">Notifications</string>
     <string name="settings_language">Language</string>

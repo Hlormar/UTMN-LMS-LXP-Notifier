@@ -22,6 +22,36 @@ fun formatTimeStamps(timestamp: String, locale: String) :String {
     return format.format(Date(timestamp.toLong() * 1000)) //sec to mill sec
 }
 
+fun enqueueDeadlines(context: Context, timestarts: MutableList<String>, hoursBeforeDeadline: Int){
+    for (i in timestarts.indices) {
+        var delaySex = timestarts[i].toLong() - (System.currentTimeMillis() / 1000)
+        if (delaySex > 0) {
+
+            //try to remind 5 hrs before, else remind now
+            val calculated = delaySex - 3600 * hoursBeforeDeadline
+            if (calculated >= 0) {
+                delaySex = calculated
+            }
+
+            val workRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
+                .addTag("lms-deadline")
+                .setInitialDelay(delaySex, TimeUnit.SECONDS)
+                .setInputData(
+                    Data.Builder()
+                        //.putBoolean("isAutoCheck", false)
+                        .putInt("scheduleActivityIndex", i)
+                        .build()
+                )
+                .build()
+            val workManager = WorkManager.getInstance(context)
+            workManager.cancelAllWorkByTag("lms-deadline")
+            workManager.enqueue(workRequest)
+            Log.d("     Parser", "set the deadline alert in $delaySex seconds")
+
+        }
+    }
+}
+
 
 fun parseOffline (context: Context) :List<Any>{
     Log.d("     Parser",    "Parsing offline")
@@ -49,7 +79,6 @@ fun parseOffline (context: Context) :List<Any>{
     }
     return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
 }
-
 
 fun parse(context: Context) :List<Any> {
     Log.d("     Parser", "Parsing online")
@@ -109,32 +138,8 @@ fun parse(context: Context) :List<Any> {
             //TODO: optimise by translating only new descr, titles and courses (requires storing maps<origin:translation>)
             SharedDS().clearStr(context, "isTranslated")
             areThereNewTasks = true
-            for (i in activities.indices) {
-                var delaySex = timeStarts[i].toLong() - (System.currentTimeMillis() / 1000)
-                if (delaySex > 0) {
+            enqueueDeadlines(context, timeStarts, SharedDS().get(context, "hoursBeforeDeadline").toIntOrNull() ?: 5)
 
-                    //try to remind 5 hrs before, else remind now
-                    val calculated = delaySex - 18000
-                    if (calculated >= 0) {
-                        delaySex = calculated
-                    }
-
-                    val workRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
-                        .addTag("lms-deadline")
-                        .setInitialDelay(delaySex, TimeUnit.SECONDS)
-                        .setInputData(
-                            Data.Builder()
-                                .putBoolean("isPeriodic", false)
-                                .putInt("scheduleActivityIndex", i)
-                                .build()
-                        )
-                        .build()
-                    val WM = WorkManager.getInstance(context)
-                    WM.cancelAllWorkByTag("lms-deadline")
-                    WM.enqueue(workRequest)
-
-                }
-            }
         } else if(!activities.containsAll(knownActivities) or !timeStarts.containsAll(knownTimestarts)) {
             // when some tasks passed away
             val amountAssignsPassed = knownActivities.lastIndex - activities.lastIndex

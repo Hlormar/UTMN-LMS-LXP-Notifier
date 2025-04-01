@@ -8,14 +8,17 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.text.method.HideReturnsTransformationMethod
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.languageManager.ActivityBase
 import com.google.android.material.textfield.TextInputEditText
@@ -24,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 
 class WelcomeActivityViewModel : ViewModel() {
@@ -87,6 +91,23 @@ class WelcomeActivity : ActivityBase() {
                 indicators[i].backgroundTintList = ContextCompat.getColorStateList(this, color)}}
 
         fun passcodeProceed(){
+            /*//init auto checks
+            val sharedDS = SharedDS()
+
+            val hour = sharedDS.get(this, "autoCheckStartHour").toIntOrNull() ?: 8
+            //val amountOfChecks = sharedDS.get(this, "autoChecksAmount")
+            lmsApp.enqueueAutoCheck(2, lmsApp.calcDelayUntil(hour, lmsApp.randomMinutes(0)))*/
+
+            val lmsApp = LmsApp()
+            val initScheduleAutoCheckRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
+                .addTag("lms-initScheduler")
+                .setInitialDelay(lmsApp.calcDelayUntil(0,0), TimeUnit.MILLISECONDS)
+                .build()
+            WorkManager.getInstance(this).enqueue(initScheduleAutoCheckRequest)
+            Log.d("     WelcomeActivity", "enqueued auto check schedule work initializer: ${WorkManager.getInstance(this).getWorkInfosByTag("lms-initScheduler")}")
+            lmsApp.scheduleAutoChecks() // for now
+
+
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()}
