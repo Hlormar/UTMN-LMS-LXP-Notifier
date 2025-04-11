@@ -393,6 +393,7 @@ class ScheduleFragment : Fragment() {
                 }
                 else{
                     if (data[8] == 0.toByte())
+                        //TODO fix crasho after lang change
                         infoText.text = getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, viewModel.locale))
                     else {
                         infoText.text = getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, viewModel.locale)) + " (" + getString(R.string.schedule_outdated) + ")"

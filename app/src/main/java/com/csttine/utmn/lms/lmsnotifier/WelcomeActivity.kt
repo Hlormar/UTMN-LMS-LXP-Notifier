@@ -44,6 +44,7 @@ class WelcomeActivityViewModel : ViewModel() {
 class WelcomeActivity : ActivityBase() {
 
     private lateinit var viewModel : WelcomeActivityViewModel
+    private val sharedDS = SharedDS()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,9 +131,9 @@ class WelcomeActivity : ActivityBase() {
                 }
 
                 if (isAllFilled){
-                    SharedDS().writeStr(this, "passcode", viewModel.passcode)
-                    SharedDS().writeStr(this, "email", viewModel.email)
-                    SharedDS().writeStr(this, "password", viewModel.password)
+                    sharedDS.writeStr(this, "passcode", viewModel.passcode)
+                    sharedDS.writeStr(this, "email", viewModel.email)
+                    sharedDS.writeStr(this, "password", viewModel.password)
                     GlobalScope.launch (Dispatchers.Main){
                         delay(150)
                         passcodeProceed()

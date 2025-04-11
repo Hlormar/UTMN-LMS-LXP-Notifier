@@ -74,12 +74,24 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
             val autoChecksAmount = inputData.getInt("autoChecksAmount", defaultValue = 1)
 
             //check if there are new assignments
-            if (parse(applicationContext)[9] as Boolean)
-                sendNotification(localizedContext.getString(R.string.notification_incoming_title),localizedContext.getString(R.string.notification_incoming_msg), -1)
-            else{
+            if (parse(applicationContext)[9] as Boolean) {
+                val emojiListTitle1 = listOf(
+                    "📋",
+                    "📝",
+                    "📢",
+                    "📥",
+                    "🔔"
+                )
+                sendNotification(
+                    "${emojiListTitle1.random()} ${localizedContext.getString(R.string.notification_incoming_title)}",
+                    localizedContext.getString(R.string.notification_incoming_msg),
+                    -1
+                )
+            }
+            /*else{
                 //do nothing or test
                 sendNotification("test", "amount is $autoChecksAmount", -1)
-            }
+            }*/
         }
 
         else if (tag.contains("lms-deadline")) {
@@ -91,7 +103,15 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
             else
                 sharedDS.getList(applicationContext, "activities")[scheduleActivityIndex]
 
-            sendNotification(localizedContext.getString(R.string.notification_upcoming_title),
+            val emojiListTitle2 = listOf(
+                "⏰",
+                "⏳",
+                "🚨",
+                "📅",
+                "⏱️"
+            )
+
+            sendNotification("${emojiListTitle2.random()} ${localizedContext.getString(R.string.notification_upcoming_title)}",
                 localizedContext.getString(R.string.notification_upcoming_msg, activity,
                     formatTimeStamps(sharedDS.getList(
                         applicationContext, "timeStarts")[scheduleActivityIndex],
