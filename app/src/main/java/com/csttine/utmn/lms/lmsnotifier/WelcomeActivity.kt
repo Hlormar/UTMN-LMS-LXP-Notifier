@@ -44,7 +44,7 @@ class WelcomeActivityViewModel : ViewModel() {
 class WelcomeActivity : ActivityBase() {
 
     private lateinit var viewModel : WelcomeActivityViewModel
-    private val sharedDS by lazy {SharedDS.getInstance(LmsApp.appContext)}
+    private val sharedDS by lazy {SharedDS.getInstance(this)}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,14 +92,7 @@ class WelcomeActivity : ActivityBase() {
                 indicators[i].backgroundTintList = ContextCompat.getColorStateList(this, color)}}
 
         fun passcodeProceed(){
-            /*//init auto checks
-            val sharedDS = SharedDS()
-
-            val hour = sharedDS.get(this, "autoCheckStartHour").toIntOrNull() ?: 8
-            //val amountOfChecks = sharedDS.get(this, "autoChecksAmount")
-            lmsApp.enqueueAutoCheck(2, lmsApp.calcDelayUntil(hour, lmsApp.randomMinutes(0)))*/
-
-            val autoCheckManager by lazy {AutoCheckManager()}
+            val autoCheckManager by lazy {AutoCheckManager(this)}
             val initScheduleAutoCheckRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
                 .addTag("lms-initScheduler")
                 .setInitialDelay(autoCheckManager.calcDelayUntil(0,0), TimeUnit.MILLISECONDS)

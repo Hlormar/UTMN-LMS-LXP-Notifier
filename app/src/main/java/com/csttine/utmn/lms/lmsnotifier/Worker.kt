@@ -122,7 +122,7 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
         //schedule auto check 24 period work
         else if (tag.contains("lms-autoCheckScheduler")){
             Log.d("     Worker", "handling scheduler work")
-            AutoCheckManager().scheduleAutoChecks()
+            AutoCheckManager(applicationContext).scheduleAutoChecks()
         }
 
         //onetime work that init scheduleAutoCheck periodic work (started once after passing welcome screen)

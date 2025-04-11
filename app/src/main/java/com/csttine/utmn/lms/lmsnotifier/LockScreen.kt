@@ -27,7 +27,7 @@ class LockScreenViewModel : ViewModel(){
 class LockScreen : ActivityBase() {
 
     private lateinit var viewModel : LockScreenViewModel
-    private val sharedDS by lazy {SharedDS.getInstance(LmsApp.appContext)}
+    private val sharedDS by lazy {SharedDS.getInstance(this)}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

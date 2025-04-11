@@ -24,7 +24,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.csttine.utmn.lms.lmsnotifier.LmsApp
 import com.csttine.utmn.lms.lmsnotifier.R
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
@@ -37,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private class CardViewAdapter(
+    private val context: Context,
     private val titlesList: List<String>,
     private val coursesList: List<String>,
     private val timestarts: List<String>,
@@ -44,7 +44,7 @@ private class CardViewAdapter(
     private val listener: OnItemClickListener,
 ) : RecyclerView.Adapter<CardViewAdapter.ViewHolder>() {
 
-    private val lmsParser by lazy {LMSParser(LmsApp.appContext)}
+    private val lmsParser by lazy {LMSParser(context)}
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val title: TextView = itemView.findViewById(R.id.cardTitle)
@@ -84,7 +84,7 @@ class ScheduleDialog: DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         //Log.d("     DIALOG", "${mixedList.indices} $position $locale")
         val viewModel =  ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
-        val lmsParser by lazy {LMSParser(LmsApp.appContext)}
+        val lmsParser by lazy {LMSParser(requireContext())}
 
         return activity?.let {
             val builder = AlertDialog.Builder(it)
@@ -125,7 +125,7 @@ class ScheduleViewModel : ViewModel(){
     companion object {
         var isParsed = false
         val dataTemp = MutableLiveData<List<Any>>()
-        var isFallback = false
+        //var isFallback = false
     }
 
     //var isFirstCreation = true
@@ -134,6 +134,7 @@ class ScheduleViewModel : ViewModel(){
     var selectedNote = -1
     var locale = ""
     var isDialogShowing = false
+    var status :Byte = -1
 
     fun asyncParse(context: Context){
         viewModelScope.launch {
@@ -141,13 +142,16 @@ class ScheduleViewModel : ViewModel(){
                 withContext(Dispatchers.IO){
                     //===================Parse=========================
                     lateinit var mixedList: MutableList<Any>
-                    val lmsParser by lazy {LMSParser(LmsApp.appContext)}
-                    val sharedDS by lazy {SharedDS.getInstance(LmsApp.appContext)}
+                    val lmsParser by lazy {LMSParser(context)}
+                    val sharedDS by lazy {SharedDS.getInstance(context)}
                     if (isParsed){
                         mixedList = lmsParser.parseOffline().toMutableList()
-                        if (!isFallback) mixedList[8] = (0).toByte() // setting source to online if it hasn't fallen back to offline during parse
+                        //if (!isFallback) mixedList[8] = (0).toByte() // setting source to online if it hasn't fallen back to offline during parse
                     }
-                    else mixedList = lmsParser.parse().toMutableList()
+                    else {
+                        mixedList = lmsParser.parse().toMutableList()
+                        status = mixedList[8] as Byte
+                    }
 
                     //===================Translate=========================
                     try {
@@ -195,7 +199,7 @@ class ScheduleViewModel : ViewModel(){
                                     email
                                 }
 
-                                val translator = Translator()
+                                val translator by lazy { Translator() }
                                 val cyrillicLanguages = listOf("rus", "bel", "ukr", "bul", "srp", "mkd", "kaz",
                                     "tgk", "tat", "kir", "uzb", "bak", "che", "mon")
                                 // opennlp may detect lang not correctly
@@ -242,10 +246,10 @@ class ScheduleViewModel : ViewModel(){
                                 // Translate Descriptions
                                 val descriptionJob = translationScope.launch {
                                     val translatedDescriptions = descriptions.mapIndexed { _, descr ->
-                                        Log.d("     ScheduleFragment", "translating descr $descr")
+                                        //Log.d("     ScheduleFragment", "translating descr $descr")
                                         if (translator.detectLanguage(descr) in cyrillicLanguages) {
                                             var newDescr = ""
-                                            for (i in Translator().splitRuTextIntoSentences(descr)){
+                                            for (i in translator.portionSentences(translator.splitRuTextIntoSentences(descr))){
                                                 Log.d("     ScheduleFragment", "translating part $i")
                                                 newDescr += translator.translateRuToEn(context, i, email)
                                             }
@@ -293,7 +297,7 @@ class ScheduleFragment : Fragment() {
     private lateinit var viewModel : ScheduleViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CardViewAdapter
-    private val lmsParser by lazy {LMSParser(LmsApp.appContext)}
+    private val lmsParser by lazy {LMSParser(requireContext())}
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -323,17 +327,18 @@ class ScheduleFragment : Fragment() {
                 viewModel.locale = LanguageManager(requireContext()).getCurrentLangCode()
 
                 //setting info message
-                if (data[8] == (-1).toByte()) {
+                Log.d("     ScheduleFragment", "${data[8] == (-1).toByte()} ${data[8] == (0).toByte()} ${data[8] == (1).toByte()}")
+                if (viewModel.status == (-1).toByte()) {
                     infoText.textAlignment = View.TEXT_ALIGNMENT_CENTER
                     infoText.text = getString(R.string.scheduleErrorMsg)
+                    //ScheduleViewModel.isFallback = true
                 }
                 else{
-                    if (data[8] == 0.toByte())
+                    if (viewModel.status == 0.toByte())
                         //TODO fix crasho after lang change
                         infoText.text = getString(R.string.schedule_accessTime, lmsParser.formatTimeStamps(data[0] as String, viewModel.locale))
                     else {
                         infoText.text = getString(R.string.schedule_accessTime, lmsParser.formatTimeStamps(data[0] as String, viewModel.locale)) + " (" + getString(R.string.schedule_outdated) + ")"
-                        ScheduleViewModel.isFallback = true
 
                     }
 
@@ -360,7 +365,7 @@ class ScheduleFragment : Fragment() {
                     val titlesList = data[1] as MutableList<String>
 
 
-                    adapter = CardViewAdapter(titlesList, data[5] as List<String>, data[3] as List<String>, viewModel.locale, object : CardViewAdapter.OnItemClickListener {
+                    adapter = CardViewAdapter(requireContext(), titlesList, data[5] as List<String>, data[3] as List<String>, viewModel.locale, object : CardViewAdapter.OnItemClickListener {
                         override fun onItemClick(position: Int) {
                             //popupNote(position, data, locale)
                             viewModel.selectedNote = position

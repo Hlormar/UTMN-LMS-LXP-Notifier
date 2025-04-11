@@ -12,7 +12,7 @@ class StartupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val sharedDS by lazy { SharedDS.getInstance(LmsApp.appContext) }
+        val sharedDS by lazy { SharedDS.getInstance(this) }
 
         if (sharedDS.get("passcode") == ""){
             //setContentView(R.layout.welcome_screen)

@@ -34,26 +34,6 @@ class Translator {
         return sentenceDetector.sentDetect(text).toList()
     }
 
-
-    /*private fun getCorrectEmail(context: Context, email: String): String{
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
-            Log.d("     getCorrectEmail", "wrong email $email")
-            val emailNew = if (email.take(4).lowercase() == "stud") "$email@study.utmn.ru" // assume user is student
-            else "$email@utmn.ru"
-            withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.toast_incorrectEmail, email, emailNew),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            return emailNew
-        }
-        else {
-            Log.d("     getCorrectEmail", "correct email $email")
-            return email}
-    }*/
-
     // used in case the separate sentence too long. May result in missing of meaning
     private fun portionByWords(text: String, maxBytes: Int): List<String> {
         val result = mutableListOf<String>()
@@ -92,7 +72,7 @@ class Translator {
 
         for (sentence in sentences) {
             if (sentence.toByteArray(Charsets.UTF_8).size <= maxBytes) {
-                result.add(sentence.trim())
+                result.add(sentence)//.trim())
                 continue
             }
 

@@ -20,104 +20,102 @@ class LMSParser(private val context: Context){
 
     private val sharedDS by lazy { SharedDS.getInstance(context) }
 
-    fun formatTimeStamps(timestamp: String, locale: String) :String {
-        //formats with app locale
-        val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Locale(locale, locale))
-        return format.format(Date(timestamp.toLong() * 1000)) //sec to mill sec
+    fun formatTimeStamps(timestamp: String, locale: String): String {
+        // Formats with app locale
+        val format = SimpleDateFormat("EEE, dd MMMM yyyy HH:mm", Locale.forLanguageTag(locale))
+        return format.format(Date(timestamp.toLong() * 1000)) // sec to mill sec
     }
 
-    fun formatTimeStampsDuration(timestampStr: String, locale: String) :String{
+    fun formatTimeStampsDuration(timestampStr: String, locale: String): String {
         val timestamp = timestampStr.toLong() * 1000
         val hours = (timestamp / (1000 * 60 * 60)) % 24
         val minutes = (timestamp / (1000 * 60)) % 60
         val seconds = (timestamp / 1000) % 60
 
         return if (hours > 0) {
-            String.format(Locale(locale, locale), "%02d:%02d:%02d", hours, minutes, seconds)
+            String.format(Locale.forLanguageTag(locale), "%02d:%02d:%02d", hours, minutes, seconds)
         } else {
-            String.format(Locale(locale, locale),"%02d:%02d", minutes, seconds)
+            String.format(Locale.forLanguageTag(locale), "%02d:%02d", minutes, seconds)
         }
     }
 
-    fun enqueueDeadlines(timestarts: MutableList<String>, hoursBeforeDeadline: Int){
-        for (i in timestarts.indices) {
-            var delaySex = timestarts[i].toLong() - (System.currentTimeMillis() / 1000)
-            if (delaySex > 0) {
-
-                //try to remind 5 hrs before, else remind now
-                val calculated = delaySex - 3600 * hoursBeforeDeadline
+    fun enqueueDeadlines(timeStarts: List<String>, hoursBeforeDeadline: Int) {
+        for ((index, timestampStr) in timeStarts.withIndex()) {
+            var delaySec = timestampStr.toLong() - (System.currentTimeMillis() / 1000)
+            if (delaySec > 0) {
+                // Try to remind 5 hours before, else remind now
+                val calculated = delaySec - 3600 * hoursBeforeDeadline
                 if (calculated >= 0) {
-                    delaySex = calculated
+                    delaySec = calculated
                 }
 
                 val workRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
                     .addTag("lms-deadline")
-                    .setInitialDelay(delaySex, TimeUnit.SECONDS)
+                    .setInitialDelay(delaySec, TimeUnit.SECONDS)
                     .setInputData(
                         Data.Builder()
-                            //.putBoolean("isAutoCheck", false)
-                            .putInt("scheduleActivityIndex", i)
+                            .putInt("scheduleActivityIndex", index)
                             .build()
                     )
                     .build()
-                val workManager = WorkManager.getInstance(context)
+                val workManager = WorkManager.getInstance(context.applicationContext)
                 workManager.cancelAllWorkByTag("lms-deadline")
                 workManager.enqueue(workRequest)
-                Log.d("     Parser", "set the deadline alert in $delaySex seconds")
-
+                Log.d("LMSParser", "Set the deadline alert in $delaySec seconds")
             }
         }
     }
 
 
-    fun parseOffline() :List<Any>{
-        Log.d("     Parser",    "Parsing offline")
-        var activities: MutableList<String> = mutableListOf()
-        var activityTypes: MutableList<String> = mutableListOf()
-        var timeStarts: MutableList<String> = mutableListOf()
-        var timeDurations: MutableList<String> = mutableListOf()
-        var descriptions: MutableList<String> = mutableListOf()
-        var coursesNames: MutableList<String> = mutableListOf()
-        var urls: MutableList<String> = mutableListOf()
-        var accessTime = sharedDS.get("accessTime")
-        var source: Byte = -1  //-1 = error; 0 = new; 1 = old
+    fun parseOffline(): List<Any> {
+        Log.d("LMSParser", "Parsing offline")
+        val activities = sharedDS.getList("activities")
+        val activityTypes = sharedDS.getList("activityTypes")
+        val timeStarts = sharedDS.getList("timeStarts")
+        val timeDurations = sharedDS.getList("timeDurations")
+        val descriptions = sharedDS.getList("descriptions")
+        val coursesNames = sharedDS.getList("coursesNames")
+        val urls = sharedDS.getList("URLs")
+        val accessTime = sharedDS.get("accessTime")
+        val source: Byte = if (accessTime.isNotEmpty()) 1 else -1
         val areThereNewTasks = false
 
-        if (accessTime != ""){
-            source = 1
-            activities = sharedDS.getList("activities")
-            activityTypes = sharedDS.getList("activityTypes")
-            timeStarts = sharedDS.getList("timeStarts")
-            timeDurations = sharedDS.getList("timeDurations")
-            descriptions = sharedDS.getList("descriptions")
-            coursesNames = sharedDS.getList("coursesNames")
-            urls = sharedDS.getList("URLs")
-            accessTime = sharedDS.get("accessTime")
-        }
         return listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
     }
 
-    fun parse() :List<Any> {
-        Log.d("     Parser", "Parsing online")
+
+    fun parse(): List<Any> {
+        Log.d("LMSParser", "Parsing online")
         if (!Python.isStarted()) {
-            Python.start(AndroidPlatform(context))
+            Python.start(AndroidPlatform(context.applicationContext))
         }
         val py = Python.getInstance()
         val pyModule = py.getModule("parser")
-        //token chores
+
+        // Token chores
         var token = sharedDS.get("token")
-        if (token == "" || token == "-1"){
+        if (token.isEmpty() || token == "-1") {
             val email = sharedDS.get("email")
             val password = sharedDS.get("password")
-            token = pyModule.callAttr("getToken", email, password).toString()
-            sharedDS.writeStr("token", token)
+            try {
+                token = pyModule.callAttr("getToken", email, password).toString()
+                sharedDS.writeStr("token", token)
+            } catch (e: Exception) {
+                Log.e("LMSParser", "Failed to get token", e)
+                return parseOffline()
+            }
         }
 
-
-        var source: Byte = -1  //-1 = error; 0 = new; 1 = old
+        var source: Byte = -1  // -1 = error; 0 = new; 1 = old
         var jsonDict = PyObject.fromJava("-1")
-        if (token != "-1"){
-            jsonDict = pyModule.callAttr("formatDict", pyModule.callAttr("getCalendar", token))}
+        if (token != "-1") {
+            try {
+                jsonDict = pyModule.callAttr("formatDict", pyModule.callAttr("getCalendar", token))
+            } catch (e: Exception) {
+                Log.e("LMSParser", "Failed to format dictionary", e)
+                return parseOffline()
+            }
+        }
 
         return if (jsonDict.toString() != "-1") {
             source = 0
@@ -132,53 +130,42 @@ class LMSParser(private val context: Context){
             val events = jsonDict.asMap()[PyObject.fromJava("events")]?.asList() ?: emptyList()
             val accessTime = jsonDict.asMap()[PyObject.fromJava("date")]?.asMap()?.get(PyObject.fromJava("timestamp")).toString()
 
-            for (i in events) {
-                activities.add(i.asMap()[PyObject.fromJava("activityname")].toString())
-                activityTypes.add(i.asMap()[PyObject.fromJava("activitystr")].toString())
-                timeStarts.add(i.asMap()[PyObject.fromJava("timestart")].toString())
-                timeDurations.add(i.asMap()[PyObject.fromJava("timeduration")].toString())
-                descriptions.add(i.asMap()[PyObject.fromJava("description")].toString())
-                urls.add(i.asMap()[PyObject.fromJava("viewurl")].toString())
-                coursesNames.add(i.asMap()[PyObject.fromJava("course")]?.asMap()?.get(
-                    PyObject.fromJava(
-                        "fullname"
-                    )
-                ).toString()) }
+            for (event in events) {
+                val eventMap = event.asMap()
+                activities.add(eventMap[PyObject.fromJava("activityname")]?.toString() ?: "")
+                activityTypes.add(eventMap[PyObject.fromJava("activitystr")]?.toString() ?: "")
+                timeStarts.add(eventMap[PyObject.fromJava("timestart")]?.toString() ?: "")
+                timeDurations.add(eventMap[PyObject.fromJava("timeduration")]?.toString() ?: "")
+                descriptions.add(eventMap[PyObject.fromJava("description")]?.toString() ?: "")
+                urls.add(eventMap[PyObject.fromJava("viewurl")]?.toString() ?: "")
+                coursesNames.add(eventMap[PyObject.fromJava("course")]?.asMap()?.get(PyObject.fromJava("fullname"))?.toString() ?: "")
+            }
 
             val knownActivities = sharedDS.getList("activities")
             val knownTimestarts = sharedDS.getList("timeStarts")
 
-            //re-enqueue if there are new tasks
-            //we check if there are new activities or if there are new deadlines, which i guess handles cases when the new ass has old name
-            //cause they are unlike to has the same timestart obviously
-            if (!knownActivities.containsAll(activities) or !knownTimestarts.containsAll(timeStarts)) {
-                //TODO: optimise by translating only new descr, titles and courses (requires storing maps<origin:translation>)
+            // Re-enqueue if there are new tasks
+            if (!knownActivities.containsAll(activities) || !knownTimestarts.containsAll(timeStarts)) {
                 sharedDS.clearStr("isTranslated")
                 areThereNewTasks = true
                 enqueueDeadlines(timeStarts, sharedDS.get("hoursBeforeDeadline").toIntOrNull() ?: 5)
+            } else if (!activities.containsAll(knownActivities) || !timeStarts.containsAll(knownTimestarts)) {
+                // When some tasks passed away
+                val amountAssignsPassed = knownActivities.size - activities.size
+                Log.d("LMSParser", "Amount of assignments has reduced by $amountAssignsPassed")
+                Log.d("LMSParser", "Current Activities: $activities\nKnown Activities: $knownActivities")
 
-            } else if(!activities.containsAll(knownActivities) or !timeStarts.containsAll(knownTimestarts)) {
-                // when some tasks passed away
-                val amountAssignsPassed = knownActivities.lastIndex - activities.lastIndex
-                Log.d("     Parser", "amount of asses has reduced by $amountAssignsPassed")
-                Log.d("     Parser", "$activities\n$knownActivities")
-
-                if (sharedDS.get("isTranslated") == "1"){
+                if (sharedDS.get("isTranslated") == "1") {
                     val translatedDescr = sharedDS.getList("translated_descriptions")
                     val translatedActs = sharedDS.getList("translated_activities")
                     val translatedCourses = sharedDS.getList("translated_coursesNames")
-                    //Log.d("     Parser", "trans acts before transformation $translatedActs")
 
-                    val currentLastIndex = translatedActs.lastIndex
-                    sharedDS.writeList("translated_activities", translatedActs.slice(0 + amountAssignsPassed..currentLastIndex) as MutableList<String>)
-                    sharedDS.writeList("translated_descriptions", translatedDescr.slice(0 + amountAssignsPassed..currentLastIndex) as MutableList<String>)
-                    sharedDS.writeList("translated_coursesNames", translatedCourses.slice(0 + amountAssignsPassed..currentLastIndex) as MutableList<String>)
-
-                    //Log.d("     Parser", "trans acts after transformation ${sharedDS.getList(context,"translated_activities")}")
+                    val currentLastIndex = translatedActs.size - amountAssignsPassed
+                    sharedDS.writeList("translated_activities", translatedActs.subList(amountAssignsPassed, currentLastIndex))
+                    sharedDS.writeList("translated_descriptions", translatedDescr.subList(amountAssignsPassed, currentLastIndex))
+                    sharedDS.writeList("translated_coursesNames", translatedCourses.subList(amountAssignsPassed, currentLastIndex))
                 }
-
             }
-
 
             sharedDS.writeStr("accessTime", accessTime)
             sharedDS.writeList("activities", activities)
@@ -188,14 +175,11 @@ class LMSParser(private val context: Context){
             sharedDS.writeList("descriptions", descriptions)
             sharedDS.writeList("coursesNames", coursesNames)
             sharedDS.writeList("URLs", urls)
-            //TODO: rearrange
+
             listOf(accessTime, activities, activityTypes, timeStarts, descriptions, coursesNames, urls, timeDurations, source, areThereNewTasks)
-        }
-        //Offline
-        else {
-            // return offline with outdated status
-            val data = (parseOffline()).toMutableList()
-            data
+        } else {
+            // Return offline with outdated status
+            parseOffline()
         }
     }
 }

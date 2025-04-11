@@ -10,7 +10,7 @@ import java.util.Locale
 
 class LanguageManager(private val context: Context) {
 
-    private val sharedDS by lazy { SharedDS.getInstance(LmsApp.appContext) }
+    private val sharedDS by lazy { SharedDS.getInstance(context) }
 
      fun updateLanguage(languageCode: String): Context{
          val locale = Locale(languageCode, languageCode)

@@ -60,8 +60,8 @@ class SettingsFragmentViewModel : ViewModel(){
 class SettingsFragment : Fragment() {
 
     private lateinit var viewModel : SettingsFragmentViewModel
-    private val sharedDS by lazy { SharedDS.getInstance(LmsApp.appContext) }
-    private val languageManager by lazy {LanguageManager(LmsApp.appContext)}
+    private val sharedDS by lazy { SharedDS.getInstance(requireContext()) }
+    private val languageManager by lazy {LanguageManager(requireContext())}
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -272,7 +272,7 @@ class SettingsFragment : Fragment() {
                         sharedDS.writeStr("autoChecksAmount", selectedItem)
                         viewModel.autoChecksAmount = selectedItem
                         WorkManager.getInstance(requireContext()).cancelAllWorkByTag("lms-autoCheck")
-                        AutoCheckManager().scheduleAutoChecks()
+                        AutoCheckManager(requireContext()).scheduleAutoChecks()
                     }
                 }
 

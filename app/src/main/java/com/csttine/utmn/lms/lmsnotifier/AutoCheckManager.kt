@@ -1,5 +1,6 @@
 package com.csttine.utmn.lms.lmsnotifier
 
+import android.content.Context
 import android.util.Log
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -8,15 +9,15 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-class AutoCheckManager {
+class AutoCheckManager(private val context: Context) {
+
     private fun getRandomMinutes(start: Int): Int{
         return Random.nextInt(start, 60)
     }
 
-
     fun scheduleAutoChecks(){
+        val sharedDS by lazy {SharedDS.getInstance(context)}
         try {
-            val sharedDS by lazy {SharedDS.getInstance(LmsApp.appContext)}
             val amountOfChecks = sharedDS.get("autoChecksAmount").toIntOrNull() ?: 3
             if (amountOfChecks > 0){
                 val calendar = Calendar.getInstance()
@@ -67,7 +68,7 @@ class AutoCheckManager {
             .addTag("lms-autoCheck")
             .setInitialDelay(delayUntilStart, TimeUnit.MILLISECONDS)
             .build()
-        val workManager = WorkManager.getInstance(LmsApp.appContext)
+        val workManager = WorkManager.getInstance(context.applicationContext)
         workManager.enqueue(workRequest)
     }
 }
