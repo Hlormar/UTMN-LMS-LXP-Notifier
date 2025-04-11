@@ -19,12 +19,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.work.WorkManager
+import com.csttine.utmn.lms.lmsnotifier.AutoCheckManager
 import com.csttine.utmn.lms.lmsnotifier.LmsApp
 import com.csttine.utmn.lms.lmsnotifier.R
+import com.csttine.utmn.lms.lmsnotifier.WorkRuntime
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.fragments.SettingsFragmentViewModel.Companion.isFirstCreation
 import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
-import com.csttine.utmn.lms.lmsnotifier.parser.enqueueDeadlines
+import com.csttine.utmn.lms.lmsnotifier.parser.LMSParser
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputEditText
@@ -32,7 +34,6 @@ import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import opennlp.tools.parser.Parser
 
 class SettingsFragmentViewModel : ViewModel(){
     companion object {
@@ -59,6 +60,8 @@ class SettingsFragmentViewModel : ViewModel(){
 class SettingsFragment : Fragment() {
 
     private lateinit var viewModel : SettingsFragmentViewModel
+    private val sharedDS by lazy { SharedDS.getInstance(LmsApp.appContext) }
+    private val languageManager by lazy {LanguageManager(LmsApp.appContext)}
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -83,15 +86,15 @@ class SettingsFragment : Fragment() {
         //restore field values after rotation or load defaults
         if (isFirstCreation.value == true) {
             isFirstCreation.value = false
-            viewModel.email = SharedDS().get(requireContext(), "email")
-            viewModel.password = SharedDS().get(requireContext(), "password")
-            viewModel.passcode = SharedDS().get(requireContext(), "passcode")
-            when (SharedDS().get(requireContext(),"Translation")) {
+            viewModel.email = sharedDS.get("email")
+            viewModel.password = sharedDS.get("password")
+            viewModel.passcode = sharedDS.get("passcode")
+            when (sharedDS.get("Translation")) {
                 "1" -> viewModel.isTranslationEnabled = true
                 else -> viewModel.isTranslationEnabled = false
             }
-            viewModel.autoChecksAmount = SharedDS().get(requireContext(), "autoChecksAmount").ifBlank { "3" }
-            viewModel.hoursBeforeAlert = SharedDS().get(requireContext(), "hoursBeforeDeadline").toIntOrNull() ?: 5
+            viewModel.autoChecksAmount = sharedDS.get("autoChecksAmount").ifBlank { "3" }
+            viewModel.hoursBeforeAlert = sharedDS.get("hoursBeforeDeadline").toIntOrNull() ?: 5
         }
 
         emailEdit.setText(viewModel.email)
@@ -230,8 +233,9 @@ class SettingsFragment : Fragment() {
                         getString(R.string.lang_rus) -> "ru"
                         else -> "en"
                     }
-                    if (selectedItem != LanguageManager().getCurrentLangCode(requireContext())){
-                        LanguageManager().updateLanguage(requireContext(), selectedItem)
+
+                    if (selectedItem != languageManager.getCurrentLangCode()){
+                        languageManager.updateLanguage(selectedItem)
                         // Check if the activity is in a valid state
                         if (!requireActivity().isFinishing && !requireActivity().isDestroyed) {
                             recreate(requireActivity())
@@ -244,16 +248,16 @@ class SettingsFragment : Fragment() {
                         //change on enabled state
                         translationSwitcher.thumbTintList = requireContext().getColorStateList(R.color.utmn)
                         translationSwitcher.trackTintList = requireContext().getColorStateList(R.color.utmn_lighter)
-                        SharedDS().writeStr(requireContext(), "Translation", "1")
+                        sharedDS.writeStr("Translation", "1")
                         ScheduleViewModel.dataTemp.postValue(listOf()) // force the spinner to appear
                     }
                     else{
                         //set to false + clean cache
-                        SharedDS().writeStr(requireContext(), "Translation", "")
-                        SharedDS().writeStr(requireContext(), "isTranslated", "")
-                        SharedDS().clearStr(requireContext(), "translated_descriptions")
-                        SharedDS().clearStr(requireContext(), "translated_activities")
-                        SharedDS().clearStr(requireContext(), "translated_coursesNames")
+                        sharedDS.writeStr("Translation", "")
+                        sharedDS.writeStr("isTranslated", "")
+                        sharedDS.clearStr("translated_descriptions")
+                        sharedDS.clearStr("translated_activities")
+                        sharedDS.clearStr("translated_coursesNames")
 
                         translationSwitcher.isUseMaterialThemeColors = true
                     }
@@ -265,14 +269,14 @@ class SettingsFragment : Fragment() {
                     val selectedItem = parent.getItemAtPosition(position) as String
                     if (selectedItem != viewModel.autoChecksAmount) {
                         Log.d("     SettingsFragment", "amount of auto checks $selectedItem")
-                        SharedDS().writeStr(requireContext(), "autoChecksAmount", selectedItem)
+                        sharedDS.writeStr("autoChecksAmount", selectedItem)
                         viewModel.autoChecksAmount = selectedItem
                         WorkManager.getInstance(requireContext()).cancelAllWorkByTag("lms-autoCheck")
-                        LmsApp().scheduleAutoChecks()
+                        AutoCheckManager().scheduleAutoChecks()
                     }
                 }
 
-                hourSlider.addOnChangeListener { slider, value, fromUser ->
+                hourSlider.addOnChangeListener { _, value, _ ->
                     // Responds to when slider's value is changed
                     Log.d("     SettingsFragment", "hours changed $value")
                     viewModel.isHourModified = true
@@ -289,20 +293,20 @@ class SettingsFragment : Fragment() {
         super.onStop()
         //save to dataStore if user input is correct
         if (viewModel.email.isNotEmpty()){
-            SharedDS().writeStr(requireContext(),"email", viewModel.email)
-            SharedDS().writeStr(requireContext(),"token", "")
+            sharedDS.writeStr("email", viewModel.email)
+            sharedDS.writeStr("token", "")
         }
         if (viewModel.password.isNotEmpty()){
-            SharedDS().writeStr(requireContext(),"password", viewModel.password)
-            SharedDS().writeStr(requireContext(),"token", "")
+            sharedDS.writeStr("password", viewModel.password)
+            sharedDS.writeStr("token", "")
         }
         if (viewModel.passcode.length == 4 && viewModel.passcode.matches(Regex("\\d+"))){
-            SharedDS().writeStr(requireContext(),"passcode", viewModel.passcode)
+            sharedDS.writeStr("passcode", viewModel.passcode)
         }
         if (viewModel.isHourModified){
             Log.d("     SettingsFragment", "recalc deadlines alerts")
-            SharedDS().writeStr(requireContext(), "hoursBeforeDeadline", viewModel.hoursBeforeAlert.toString())
-            enqueueDeadlines(requireContext(), SharedDS().getList(requireContext(),"timeStarts"), viewModel.hoursBeforeAlert)
+            sharedDS.writeStr("hoursBeforeDeadline", viewModel.hoursBeforeAlert.toString())
+            LMSParser(requireContext()).enqueueDeadlines(sharedDS.getList("timeStarts"), viewModel.hoursBeforeAlert)
         }
     }
 }

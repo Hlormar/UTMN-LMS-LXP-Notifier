@@ -4,17 +4,18 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
-import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Html
-import android.view.Gravity
+import android.util.Log
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupWindow
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.view.isVisible
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -23,48 +24,27 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.csttine.utmn.lms.lmsnotifier.LmsApp
 import com.csttine.utmn.lms.lmsnotifier.R
-import com.csttine.utmn.lms.lmsnotifier.parser.parse
+import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
+import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
+import com.csttine.utmn.lms.lmsnotifier.parser.LMSParser
+import com.csttine.utmn.lms.lmsnotifier.translator.Translator
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.util.Log
-import android.util.DisplayMetrics
-import android.util.Patterns
-import android.widget.ImageButton
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.DialogFragment
-import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
-import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
-import com.csttine.utmn.lms.lmsnotifier.parser.formatTimeStamps
-import com.csttine.utmn.lms.lmsnotifier.parser.parseOffline
-import com.csttine.utmn.lms.lmsnotifier.translator.Translator
-import kotlinx.coroutines.CoroutineScope
-import java.util.Locale
-
-
-fun formatTimeStampsDuration(timestampStr: String, locale: String) :String{
-    val timestamp = timestampStr.toLong() * 1000
-    val hours = (timestamp / (1000 * 60 * 60)) % 24
-    val minutes = (timestamp / (1000 * 60)) % 60
-    val seconds = (timestamp / 1000) % 60
-
-    return if (hours > 0) {
-        String.format(Locale(locale, locale), "%02d:%02d:%02d", hours, minutes, seconds)
-    } else {
-        String.format(Locale(locale, locale),"%02d:%02d", minutes, seconds)
-    }
-}
 
 private class CardViewAdapter(
     private val titlesList: List<String>,
     private val coursesList: List<String>,
     private val timestarts: List<String>,
     private val locale: String,
-    private val listener: OnItemClickListener
+    private val listener: OnItemClickListener,
 ) : RecyclerView.Adapter<CardViewAdapter.ViewHolder>() {
+
+    private val lmsParser by lazy {LMSParser(LmsApp.appContext)}
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val title: TextView = itemView.findViewById(R.id.cardTitle)
@@ -83,7 +63,7 @@ private class CardViewAdapter(
 
     // Binding the data to the ViewHolder
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val description = "${coursesList[position]}\n${formatTimeStamps(timestarts[position], locale)}"
+        val description = "${coursesList[position]}\n${lmsParser.formatTimeStamps(timestarts[position], locale)}"
         holder.title.text = titlesList[position]
         holder.description.text = description
 
@@ -104,10 +84,12 @@ class ScheduleDialog: DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         //Log.d("     DIALOG", "${mixedList.indices} $position $locale")
         val viewModel =  ViewModelProvider(requireActivity())[ScheduleViewModel::class.java]
+        val lmsParser by lazy {LMSParser(LmsApp.appContext)}
+
         return activity?.let {
             val builder = AlertDialog.Builder(it)
             // Get the layout inflater.
-            val inflater = requireActivity().layoutInflater;
+            val inflater = requireActivity().layoutInflater
             // Inflate and set the layout for the dialog.
             // Pass null as the parent view because it's going in the dialog
             // layout.
@@ -119,15 +101,15 @@ class ScheduleDialog: DialogFragment() {
                 dialogView.findViewById<TextView>(R.id.activity).text = (mixedList[1] as List<String>)[position]
                 dialogView.findViewById<TextView>(R.id.course).text = (mixedList[5] as List<String>)[position]
                 dialogView.findViewById<TextView>(R.id.type).text = (mixedList[2] as List<String>)[position]
-                dialogView.findViewById<TextView>(R.id.timestart).text = formatTimeStamps((mixedList[3] as List<String>)[position], locale)
-                dialogView.findViewById<TextView>(R.id.duration).text = formatTimeStampsDuration((mixedList[7] as List<String>)[position], LanguageManager().getCurrentLangCode(requireContext()))
+                dialogView.findViewById<TextView>(R.id.timestart).text = lmsParser.formatTimeStamps((mixedList[3] as List<String>)[position], locale)
+                dialogView.findViewById<TextView>(R.id.duration).text = lmsParser.formatTimeStampsDuration((mixedList[7] as List<String>)[position], LanguageManager(requireContext()).getCurrentLangCode())
                 dialogView.findViewById<TextView>(R.id.url).text = (mixedList[6] as List<String>)[position]
                 dialogView.findViewById<TextView>(R.id.description).text = Html.fromHtml((mixedList[4] as List<String>)[position], Html.FROM_HTML_MODE_COMPACT)
             }
             builder.setView(dialogView)
                 // Add action buttons.
                 .setNegativeButton(R.string.button_close
-                ) { dialog, id ->
+                ) { _, _ ->
                     //getDialog()?.cancel()
                     viewModel.isDialogShowing = false
                     dismiss()
@@ -138,53 +120,6 @@ class ScheduleDialog: DialogFragment() {
         } ?: throw IllegalStateException("Activity cannot be null")
     }
 }
-
-/*private fun popupNote(position: Int, mixedList: List<Any>, locale: String){
-    @SuppressLint("InflateParams")
-    val rootView = (requireActivity() as AppCompatActivity).findViewById<View>(android.R.id.content)
-    val popupLayout = layoutInflater.inflate(R.layout.popup_screen, null, false)
-
-    popupLayout.findViewById<TextView>(R.id.activity).text = (mixedList[1] as List<String>)[position]
-    popupLayout.findViewById<TextView>(R.id.course).text = (mixedList[5] as List<String>)[position]
-    popupLayout.findViewById<TextView>(R.id.type).text = (mixedList[2] as List<String>)[position]
-    popupLayout.findViewById<TextView>(R.id.timestart).text = formatTimeStamps((mixedList[3] as List<String>)[position], locale)
-    popupLayout.findViewById<TextView>(R.id.duration).text = formatTimeStampsDuration((mixedList[7] as List<String>)[position], LanguageManager().getCurrentLangCode(requireContext()))
-    popupLayout.findViewById<TextView>(R.id.url).text = (mixedList[6] as List<String>)[position]
-    popupLayout.findViewById<TextView>(R.id.description).text = Html.fromHtml((mixedList[4] as List<String>)[position], Html.FROM_HTML_MODE_COMPACT)
-
-    val navBar = requireActivity().findViewById<BottomNavigationView>(R.id.nav_bar)
-    var isListenerTriggered = false  //used to prevent redundant onGlobalLayout listener execution
-
-    navBar.viewTreeObserver.addOnGlobalLayoutListener {
-        if (isListenerTriggered) return@addOnGlobalLayoutListener  //stops execution
-        isListenerTriggered = true
-
-
-        //TODO: make sizing, dimming, make card clickable, do translatein
-        navBar.viewTreeObserver.removeOnGlobalLayoutListener{}
-    }
-
-    val windowManager = requireActivity().windowManager
-    val displayMetrics = DisplayMetrics()
-    windowManager.defaultDisplay.getMetrics(displayMetrics)
-    val popupWidth = (displayMetrics.widthPixels * 0.9).toInt()
-    val popupHeight = (displayMetrics.heightPixels * 0.85).toInt()
-    val popupWindow = PopupWindow(
-        popupLayout,
-        popupWidth,
-        popupHeight,
-        true
-    )
-
-    popupLayout.findViewById<ImageButton>(R.id.close).setOnClickListener{
-        popupWindow.dismiss()
-    }
-
-    popupWindow.isOutsideTouchable = true
-    popupWindow.isFocusable = true
-    popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0)
-}*/
-
 
 class ScheduleViewModel : ViewModel(){
     companion object {
@@ -206,19 +141,21 @@ class ScheduleViewModel : ViewModel(){
                 withContext(Dispatchers.IO){
                     //===================Parse=========================
                     lateinit var mixedList: MutableList<Any>
+                    val lmsParser by lazy {LMSParser(LmsApp.appContext)}
+                    val sharedDS by lazy {SharedDS.getInstance(LmsApp.appContext)}
                     if (isParsed){
-                        mixedList = parseOffline(context).toMutableList()
+                        mixedList = lmsParser.parseOffline().toMutableList()
                         if (!isFallback) mixedList[8] = (0).toByte() // setting source to online if it hasn't fallen back to offline during parse
                     }
-                    else mixedList = parse(context).toMutableList()
+                    else mixedList = lmsParser.parse().toMutableList()
 
                     //===================Translate=========================
                     try {
-                        val shouldTranslate = when(SharedDS().get(context, "Translation")){
+                        val shouldTranslate = when(sharedDS.get("Translation")){
                             "1" -> true
                             else -> false
                         }
-                        val isTranslated = when (SharedDS().get(context, "isTranslated")){
+                        val isTranslated = when (sharedDS.get("isTranslated")){
                             "1" -> true
                             else -> false
                         }
@@ -226,9 +163,9 @@ class ScheduleViewModel : ViewModel(){
                         if (shouldTranslate && mixedList[8] != (-1).toByte()){
                             if (isTranslated){
                                 Log.d("     TRANSLATING", "TRANSLATED")
-                                mixedList[4] = SharedDS().getList(context, "translated_descriptions")
-                                mixedList[1] = SharedDS().getList(context, "translated_activities")
-                                mixedList[5] = SharedDS().getList(context, "translated_coursesNames")
+                                mixedList[4] = sharedDS.getList("translated_descriptions")
+                                mixedList[1] = sharedDS.getList("translated_activities")
+                                mixedList[5] = sharedDS.getList("translated_coursesNames")
 
                             }
                             else if (!isTranslating){
@@ -239,7 +176,7 @@ class ScheduleViewModel : ViewModel(){
                                 }
 
                                 //get correct email
-                                var email = SharedDS().get(context, "email")
+                                var email = sharedDS.get("email")
                                 email = if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
                                     Log.d("     getCorrectEmail", "wrong email $email")
                                     val emailNew = if (email.take(4).lowercase() == "stud") "$email@study.utmn.ru" // assume user is student
@@ -326,11 +263,11 @@ class ScheduleViewModel : ViewModel(){
                                     job.join()
                                 }
 
-                                SharedDS().writeStr(context, "isTranslated", "1")
-                                Log.d("TRANSLATING", "FINISH ${SharedDS().get(context, "isTranslated")}")
-                                SharedDS().writeList(context, "translated_activities", mixedList[1] as MutableList<String>)
-                                SharedDS().writeList(context, "translated_descriptions", mixedList[4] as MutableList<String>)
-                                SharedDS().writeList(context, "translated_coursesNames", mixedList[5] as MutableList<String>)
+                                sharedDS.writeStr("isTranslated", "1")
+                                Log.d("TRANSLATING", "FINISH ${sharedDS.get("isTranslated")}")
+                                sharedDS.writeList("translated_activities", mixedList[1] as MutableList<String>)
+                                sharedDS.writeList("translated_descriptions", mixedList[4] as MutableList<String>)
+                                sharedDS.writeList("translated_coursesNames", mixedList[5] as MutableList<String>)
                                 isTranslating = false
                             } else Log.d("      TRANSLATING", "NOT STARTING, BECAUSE ALREADY TRANSLATING")
                         }
@@ -356,6 +293,7 @@ class ScheduleFragment : Fragment() {
     private lateinit var viewModel : ScheduleViewModel
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CardViewAdapter
+    private val lmsParser by lazy {LMSParser(LmsApp.appContext)}
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -363,8 +301,6 @@ class ScheduleFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_schedule, container, false)
         return view }
 
-
-    //TODO : POPUP ON CLOSE selectedPopup = -1
     @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -384,7 +320,7 @@ class ScheduleFragment : Fragment() {
                 val infoText = view.findViewById<TextView>(R.id.infoText)
                 view.findViewById<ProgressBar>(R.id.loadingAnim).isVisible = false
 
-                viewModel.locale = LanguageManager().getCurrentLangCode(requireContext())
+                viewModel.locale = LanguageManager(requireContext()).getCurrentLangCode()
 
                 //setting info message
                 if (data[8] == (-1).toByte()) {
@@ -394,9 +330,9 @@ class ScheduleFragment : Fragment() {
                 else{
                     if (data[8] == 0.toByte())
                         //TODO fix crasho after lang change
-                        infoText.text = getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, viewModel.locale))
+                        infoText.text = getString(R.string.schedule_accessTime, lmsParser.formatTimeStamps(data[0] as String, viewModel.locale))
                     else {
-                        infoText.text = getString(R.string.schedule_accessTime, formatTimeStamps(data[0] as String, viewModel.locale)) + " (" + getString(R.string.schedule_outdated) + ")"
+                        infoText.text = getString(R.string.schedule_accessTime, lmsParser.formatTimeStamps(data[0] as String, viewModel.locale)) + " (" + getString(R.string.schedule_outdated) + ")"
                         ScheduleViewModel.isFallback = true
 
                     }

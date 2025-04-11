@@ -44,7 +44,7 @@ class WelcomeActivityViewModel : ViewModel() {
 class WelcomeActivity : ActivityBase() {
 
     private lateinit var viewModel : WelcomeActivityViewModel
-    private val sharedDS = SharedDS()
+    private val sharedDS by lazy {SharedDS.getInstance(LmsApp.appContext)}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,14 +99,14 @@ class WelcomeActivity : ActivityBase() {
             //val amountOfChecks = sharedDS.get(this, "autoChecksAmount")
             lmsApp.enqueueAutoCheck(2, lmsApp.calcDelayUntil(hour, lmsApp.randomMinutes(0)))*/
 
-            val lmsApp = LmsApp()
+            val autoCheckManager by lazy {AutoCheckManager()}
             val initScheduleAutoCheckRequest = OneTimeWorkRequest.Builder(WorkRuntime::class.java)
                 .addTag("lms-initScheduler")
-                .setInitialDelay(lmsApp.calcDelayUntil(0,0), TimeUnit.MILLISECONDS)
+                .setInitialDelay(autoCheckManager.calcDelayUntil(0,0), TimeUnit.MILLISECONDS)
                 .build()
             WorkManager.getInstance(this).enqueue(initScheduleAutoCheckRequest)
             Log.d("     WelcomeActivity", "enqueued auto check schedule work initializer: ${WorkManager.getInstance(this).getWorkInfosByTag("lms-initScheduler")}")
-            lmsApp.scheduleAutoChecks() // for now
+            autoCheckManager.scheduleAutoChecks() // for now
 
 
             val intent = Intent(this, MainActivity::class.java)
@@ -131,9 +131,9 @@ class WelcomeActivity : ActivityBase() {
                 }
 
                 if (isAllFilled){
-                    sharedDS.writeStr(this, "passcode", viewModel.passcode)
-                    sharedDS.writeStr(this, "email", viewModel.email)
-                    sharedDS.writeStr(this, "password", viewModel.password)
+                    sharedDS.writeStr("passcode", viewModel.passcode)
+                    sharedDS.writeStr("email", viewModel.email)
+                    sharedDS.writeStr("password", viewModel.password)
                     GlobalScope.launch (Dispatchers.Main){
                         delay(150)
                         passcodeProceed()

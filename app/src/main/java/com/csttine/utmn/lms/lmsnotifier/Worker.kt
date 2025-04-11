@@ -14,8 +14,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import com.csttine.utmn.lms.lmsnotifier.languageManager.LanguageManager
-import com.csttine.utmn.lms.lmsnotifier.parser.formatTimeStamps
-import com.csttine.utmn.lms.lmsnotifier.parser.parse
+import com.csttine.utmn.lms.lmsnotifier.parser.LMSParser
 import java.util.concurrent.TimeUnit
 
 class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
@@ -63,10 +62,11 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
     override fun doWork(): Result {
         //val isAutoCheck = inputData.getBoolean("isAutoCheck", true)
         val tag = tags
-        val sharedDS = SharedDS()
-        val languageManager = LanguageManager()
-        val currentLang = languageManager.getCurrentLangCode(applicationContext)
-        val localizedContext = languageManager.updateLanguage(applicationContext, currentLang)
+        val sharedDS by lazy {SharedDS.getInstance(applicationContext)}
+        val languageManager by lazy {LanguageManager(applicationContext)}
+        val lmsParser by lazy {LMSParser(applicationContext)}
+        val currentLang = languageManager.getCurrentLangCode()
+        val localizedContext = languageManager.updateLanguage(currentLang)
 
         Log.d("     Worker", "tags $tag")
         if (tag.contains("lms-autoCheck")){
@@ -74,7 +74,7 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
             val autoChecksAmount = inputData.getInt("autoChecksAmount", defaultValue = 1)
 
             //check if there are new assignments
-            if (parse(applicationContext)[9] as Boolean) {
+            if (lmsParser.parse()[9] as Boolean) {
                 val emojiListTitle1 = listOf(
                     "📋",
                     "📝",
@@ -90,7 +90,6 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
             }
             /*else{
                 //do nothing or test
-                sendNotification("test", "amount is $autoChecksAmount", -1)
             }*/
         }
 
@@ -98,10 +97,10 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
             Log.d("     Worker", "handling deadline work")
             val scheduleActivityIndex = inputData.getInt("scheduleActivityIndex", -1)
 
-            val activity = if(sharedDS.get(applicationContext,"isTranslated") == "1")
-                sharedDS.getList(applicationContext, "translated_activities")[scheduleActivityIndex]
+            val activity = if(sharedDS.get("isTranslated") == "1")
+                sharedDS.getList("translated_activities")[scheduleActivityIndex]
             else
-                sharedDS.getList(applicationContext, "activities")[scheduleActivityIndex]
+                sharedDS.getList("activities")[scheduleActivityIndex]
 
             val emojiListTitle2 = listOf(
                 "⏰",
@@ -113,9 +112,8 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
 
             sendNotification("${emojiListTitle2.random()} ${localizedContext.getString(R.string.notification_upcoming_title)}",
                 localizedContext.getString(R.string.notification_upcoming_msg, activity,
-                    formatTimeStamps(sharedDS.getList(
-                        applicationContext, "timeStarts")[scheduleActivityIndex],
-                        LanguageManager().getCurrentLangCode(applicationContext))
+                    lmsParser.formatTimeStamps(sharedDS.getList("timeStarts")[scheduleActivityIndex],
+                        languageManager.getCurrentLangCode())
                 ),
                 scheduleActivityIndex
             )
@@ -124,7 +122,7 @@ class WorkRuntime(appContext: Context, workerParams: WorkerParameters) : Worker(
         //schedule auto check 24 period work
         else if (tag.contains("lms-autoCheckScheduler")){
             Log.d("     Worker", "handling scheduler work")
-            LmsApp().scheduleAutoChecks()
+            AutoCheckManager().scheduleAutoChecks()
         }
 
         //onetime work that init scheduleAutoCheck periodic work (started once after passing welcome screen)

@@ -3,17 +3,21 @@ package com.csttine.utmn.lms.lmsnotifier.languageManager
 import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
+import com.csttine.utmn.lms.lmsnotifier.LmsApp
 import com.csttine.utmn.lms.lmsnotifier.datastore.SharedDS
 import java.util.Locale
 
 
-class LanguageManager {
-     fun updateLanguage(context: Context, languageCode: String): Context{
+class LanguageManager(private val context: Context) {
+
+    private val sharedDS by lazy { SharedDS.getInstance(LmsApp.appContext) }
+
+     fun updateLanguage(languageCode: String): Context{
          val locale = Locale(languageCode, languageCode)
         Locale.setDefault(locale)
 
          // save
-         SharedDS().writeStr(context, "locale", languageCode)
+         sharedDS.writeStr("locale", languageCode)
 
          //new cfg
          val config = Configuration(context.resources.configuration)
@@ -23,8 +27,8 @@ class LanguageManager {
          return context.createConfigurationContext(config)
     }
 
-    fun getCurrentLangCode(context: Context): String{
-        val locale = SharedDS().get(context, "locale")
+    fun getCurrentLangCode(): String{
+        val locale = sharedDS.get("locale")
         Log.d("     getCurrentLocale", locale)
         return if (locale != "") locale
         else {

@@ -23,6 +23,8 @@ materialVersion = "1.2.1"
 googleMaterial = "1.12.0"
 retrofitVersion = "2.11.0"
 okhttp = "2.7.5"
+securityCryptoKtx = "1.0.0"
+securityCryptoKtxVersion = "1.1.0-alpha07"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.15.0" }
@@ -47,6 +49,8 @@ com-google-android-material-material = { group = "com.google.android.material", 
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit2-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofitVersion" }
 okhttp = { group = "com.squareup.okhttp", name = "okhttp", version.ref = "okhttp" }
+androidx-security-crypto-ktx = { group = "androidx.security", name = "security-crypto-ktx", version.ref = "securityCryptoKtx" }
+security-crypto-ktx = { group = "androidx.security", name = "security-crypto-ktx", version.ref = "securityCryptoKtxVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

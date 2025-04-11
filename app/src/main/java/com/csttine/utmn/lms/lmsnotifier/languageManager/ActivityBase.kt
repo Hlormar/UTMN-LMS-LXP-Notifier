@@ -10,7 +10,7 @@ abstract class ActivityBase : AppCompatActivity() {
     }
 
     private fun updateLocale(context: Context): Context {
-        val savedLanguage = LanguageManager().getCurrentLangCode(context)
-        return LanguageManager().updateLanguage(context, savedLanguage)
+        val savedLanguage = LanguageManager(context).getCurrentLangCode()
+        return LanguageManager(context).updateLanguage(savedLanguage)
     }
 }

@@ -27,6 +27,7 @@ class LockScreenViewModel : ViewModel(){
 class LockScreen : ActivityBase() {
 
     private lateinit var viewModel : LockScreenViewModel
+    private val sharedDS by lazy {SharedDS.getInstance(LmsApp.appContext)}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +37,7 @@ class LockScreen : ActivityBase() {
         viewModel = ViewModelProvider(this)[LockScreenViewModel::class.java]
         var passcode = viewModel.passcode
         var passLen = viewModel.passLen
-        val exactPass = SharedDS().get(this, "passcode")
+        val exactPass = sharedDS.get("passcode")
 
         //vibrator
         val vibrator = getSystemService("vibrator") as Vibrator
