@@ -1,7 +1,11 @@
 # UTMN LMS & LXP notifier
-Is an android application, developed to notify students of Tyumen university about new tasks and upcoming deadlines on UTMN LMS / LXP, also to provide easy access for weekly task schedule. This application is being developed as a product of the English project assignment by freshmans (aproximately 10.2024 - current time).
+
+
+Is an android application, developed to notify students of Tyumen university about new tasks and upcoming deadlines on UTMN LMS / LXP, also to provide easy access for weekly task schedule. This application is being developed as a product of the English project assignment by a freshman (aproximately 10.2024 - current time).
 
 The application executes the python script using Chaquopy https://github.com/Hlormar/UTMN-LMS-parser to extract the LMS calendar data.
+![lms git](https://github.com/user-attachments/assets/a85000ae-5760-46e9-8711-d4396af351fc)
+
 
 ## Cloning
 ```bash
@@ -9,25 +13,6 @@ git clone --recurse-submodules https://github.com/Hlormar/UTMN-LMS-LXP-Notifier.
 ```
 
 # TODO
-- [x] Fix the layout scaling (some bottom elements are not showing appropriately on some devices)
-- [ ] Improve the design
-- [x] Add courses names
-- [x] Make switching to schedule tab independent from parsing process
-- [x] Render description as html
-- [x] Make every activity survive config changes (rotation, theme changing)
-- [x] Add loading animation
-- [x] Make each note as a clickable card view
-- [x] Add credits to settings
-- [x] Modify time format
-- [x] Provide android 9.0 support
-- [x] Add notification for new tasks appearing in calendar
-- [x] Add notification about upcoming deadline (timestart)
-- [x] Add customizable amount of auto-checks per day
-- [x] RU/EN + full RU->EN descriptions translation
-- [x] Make upcoming deadline notification timing customizable (default is 5 hours)
-- [x] Limit the amount of reloads to reduce the server load
 - [ ] Add notification if the activity time changed
+- [ ] Add ability to reload schedule if the error occured because of lose of conncetion
 - [ ] Switch from python parser to okhttp
-- [ ] Replace multiple cast of classes and generally improve quality of code
-
-![5asdf](https://github.com/user-attachments/assets/2d320ee2-cfe5-4212-aa1b-530a9fcdd24c) ![3asdf](https://github.com/user-attachments/assets/b0275403-b822-4779-b768-120f641d1671) ![2asdf](https://github.com/user-attachments/assets/15619b2b-af85-4fad-b699-715330bf5601)
